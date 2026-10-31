@@ -1,8 +1,9 @@
-package com.example.demo.controller;
+package com.example.Reporti.controller;
 
-import com.example.demo.model.Category;
-import com.example.demo.repository.CategoryRepository;
 import org.springframework.web.bind.annotation.*;
+
+import com.example.Reporti.model.Category;
+import com.example.Reporti.repository.CategoryRepository;
 
 import java.util.List;
 
