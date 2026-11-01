@@ -24,6 +24,9 @@ public class Report {
     private Long id;
 
     @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false)
     private String description;
 
     // The DB uses native Postgres enum types, hence NAMED_ENUM
@@ -73,6 +76,8 @@ public class Report {
     }
 
     public Long getId() { return id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public ReportStatus getStatus() { return status; }
