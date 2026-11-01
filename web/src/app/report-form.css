@@ -1,0 +1,111 @@
+h1 {
+  font-size: 1.5rem;
+  margin: 0 0 1rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+label {
+  font-weight: 600;
+  margin-top: 0.75rem;
+}
+
+input,
+select,
+textarea {
+  padding: 0.5rem;
+  font: inherit;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+}
+
+input.ng-invalid.ng-touched,
+select.ng-invalid.ng-touched,
+textarea.ng-invalid.ng-touched {
+  border-color: #b3261e;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input[type='file'] {
+  padding: 0.35rem;
+}
+
+fieldset {
+  margin: 1rem 0 0;
+  padding: 0.25rem 0.75rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+legend {
+  font-weight: 600;
+  padding: 0 0.25rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.row > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  margin-top: 1rem;
+  padding: 0.6rem 1rem;
+  font: inherit;
+  color: #fff;
+  background: #1d5fd1;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button.secondary {
+  margin-top: 0.5rem;
+  align-self: flex-start;
+  color: #1d5fd1;
+  background: #eef2fb;
+  border: 1px solid #c5d3f0;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #b3261e;
+}
+
+.banner {
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+}
+
+.error-banner {
+  color: #b3261e;
+  background: #fdecea;
+}
+
+.success-banner {
+  color: #1b6b35;
+  background: #e7f6ec;
+}
+
+.files {
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+}

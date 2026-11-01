@@ -1,0 +1,106 @@
+<h1>Report a problem</h1>
+
+@if (loadError()) {
+  <p class="banner error-banner" role="alert">{{ loadError() }}</p>
+}
+
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <label for="title">Title</label>
+  <input id="title" type="text" formControlName="title" />
+  @if (showError(form.controls.title)) {
+    <small class="error">
+      {{ form.controls.title.hasError('required') ? 'Title is required' : 'At most 150 characters' }}
+    </small>
+  }
+
+  <label for="description">Description</label>
+  <textarea id="description" rows="4" formControlName="description"></textarea>
+  @if (showError(form.controls.description)) {
+    <small class="error">
+      {{ form.controls.description.hasError('required') ? 'Description is required' : 'At most 2000 characters' }}
+    </small>
+  }
+
+  <label for="category">Category</label>
+  <select id="category" formControlName="categoryId">
+    <option [ngValue]="null" disabled>Choose a category</option>
+    @for (category of categories(); track category.id) {
+      <option [ngValue]="category.id">{{ category.name }}</option>
+    }
+  </select>
+  @if (showError(form.controls.categoryId)) {
+    <small class="error">Choose a category</small>
+  }
+
+  <label for="sector">Sector</label>
+  <select id="sector" formControlName="sectorId">
+    <option [ngValue]="null" disabled>Choose a sector</option>
+    @for (sector of sectors(); track sector.id) {
+      <option [ngValue]="sector.id">{{ sector.name }}{{ sector.zone ? ' (' + sector.zone + ')' : '' }}</option>
+    }
+  </select>
+  @if (showError(form.controls.sectorId)) {
+    <small class="error">Choose a sector</small>
+  }
+
+  <fieldset>
+    <legend>Location</legend>
+    <button type="button" class="secondary" (click)="useMyLocation()" [disabled]="locating() || form.disabled">
+      {{ locating() ? 'Locating…' : 'Use my current location' }}
+    </button>
+    @if (locationError()) {
+      <small class="error">{{ locationError() }}</small>
+    }
+    <div class="row">
+      <div>
+        <label for="latitude">Latitude</label>
+        <input id="latitude" type="number" step="any" formControlName="latitude" />
+        @if (showError(form.controls.latitude)) {
+          <small class="error">
+            {{ form.controls.latitude.hasError('required') ? 'Required' : 'Must be between -90 and 90' }}
+          </small>
+        }
+      </div>
+      <div>
+        <label for="longitude">Longitude</label>
+        <input id="longitude" type="number" step="any" formControlName="longitude" />
+        @if (showError(form.controls.longitude)) {
+          <small class="error">
+            {{ form.controls.longitude.hasError('required') ? 'Required' : 'Must be between -180 and 180' }}
+          </small>
+        }
+      </div>
+    </div>
+  </fieldset>
+
+  <label for="photos">Photos or videos (optional)</label>
+  <input
+    id="photos"
+    type="file"
+    accept="image/*,video/*"
+    multiple
+    #photoInput
+    (change)="onFilesSelected($event)"
+  />
+  @if (fileError()) {
+    <small class="error">{{ fileError() }}</small>
+  }
+  @if (files().length > 0) {
+    <ul class="files">
+      @for (file of files(); track $index) {
+        <li>{{ file.name }} ({{ formatSize(file.size) }})</li>
+      }
+    </ul>
+  }
+
+  @if (errorMessage()) {
+    <p class="banner error-banner" role="alert">{{ errorMessage() }}</p>
+  }
+  @if (successMessage()) {
+    <p class="banner success-banner" role="status">{{ successMessage() }}</p>
+  }
+
+  <button type="submit" [disabled]="submitting() || loading()">
+    {{ submitting() ? 'Sending…' : pendingUploadId() !== null ? 'Retry photo upload' : 'Submit report' }}
+  </button>
+</form>
