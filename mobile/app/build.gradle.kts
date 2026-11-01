@@ -12,7 +12,9 @@ android {
     defaultConfig {
         applicationId = "com.example.reporti"
         minSdk = 24
-        targetSdk = 37
+        // Kept at 36 on purpose: apps targeting 37 are blocked from local-network addresses (our dev backend
+        // at 10.0.2.2) unless they request the ACCESS_LOCAL_NETWORK permission, and a request would only matter in dev.
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -44,6 +46,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
