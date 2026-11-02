@@ -3,6 +3,7 @@ package com.example.reporti
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,15 +20,21 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.reporti.ui.ReportFormScreen
 import com.example.reporti.ui.home.HomeScreen
 import com.example.reporti.ui.home.HomeViewModel
 import com.example.reporti.ui.notifications.NotificationViewModel
 import com.example.reporti.ui.notifications.NotificationsScreen
+import com.example.reporti.ui.theme.ReportiTheme
+
+// Room kept free at the bottom of the report form so the floating navigation bar does not cover its last fields.
+private val BOTTOM_BAR_SPACE = 110.dp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { MaterialTheme { MainScreen() } }
+        enableEdgeToEdge()
+        setContent { ReportiTheme { MainScreen() } }
     }
 }
 
@@ -52,10 +59,23 @@ fun MainScreen() {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        // The app draws edge to edge, so each screen keeps clear of the status bar itself.
         when (selectedTab) {
-            Screen.Home -> HomeScreen(homeVm)
-            Screen.Notifications -> NotificationsScreen(notificationVm)
-            Screen.Report -> PlaceholderScreen("Report (à faire par l'équipe)")
+            Screen.Home -> Box(Modifier.fillMaxSize().statusBarsPadding()) {
+                HomeScreen(homeVm)
+            }
+
+            Screen.Notifications -> Box(Modifier.fillMaxSize().statusBarsPadding()) {
+                NotificationsScreen(notificationVm)
+            }
+
+            // Its ViewModel is scoped to the activity, so the typed values survive switching tabs.
+            Screen.Report -> ReportFormScreen(
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .padding(bottom = BOTTOM_BAR_SPACE)
+            )
+
             Screen.Map -> PlaceholderScreen("Map (à faire par l'équipe)")
             Screen.Profile -> PlaceholderScreen("Profile (bientôt disponible)")
         }
@@ -64,6 +84,7 @@ fun MainScreen() {
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .padding(horizontal = 12.dp, vertical = 16.dp),
             shape = RoundedCornerShape(36.dp),
             tonalElevation = 8.dp,

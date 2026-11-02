@@ -1,0 +1,31 @@
+# Java & Maven / Gradle build outputs
+target/
+build/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IDE & Editor files (STS, Eclipse, IntelliJ, VS Code)
+.classpath
+.project
+.settings/
+.springBeans
+.sts4-cache
+.apt_generated
+.factorypath
+.idea
+*.iws
+*.iml
+*.ipr
+.vscode/
+
+# Logs & Environment
+*.log
+.env
+.env.*
+!.env.example
+
+# Node / Angular / Web dependencies & cache
+node_modules/
+dist/
+.cache/
