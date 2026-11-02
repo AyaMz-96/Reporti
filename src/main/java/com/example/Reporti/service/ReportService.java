@@ -62,6 +62,12 @@ public class ReportService {
         Report saved = reportRepository.save(report);
         return ReportResponse.from(saved, List.of());
     }
+        @Transactional(readOnly = true)
+    public List<ReportResponse> list() {
+        return reportRepository.findByArchivedFalseOrderByCreatedAtDesc().stream()
+                .map(report -> ReportResponse.from(report, mediaRepository.findByReportId(report.getId())))
+                .toList();
+    }
 
     public ReportResponse get(Long reportId) {
         Report report = findReport(reportId);
