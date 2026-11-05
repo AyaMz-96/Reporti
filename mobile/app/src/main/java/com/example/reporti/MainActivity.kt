@@ -26,6 +26,7 @@ import com.example.reporti.ui.home.HomeViewModel
 import com.example.reporti.ui.notifications.NotificationViewModel
 import com.example.reporti.ui.notifications.NotificationsScreen
 import com.example.reporti.ui.theme.ReportiTheme
+import com.example.reporti.ui.map.MapScreen
 
 // Room kept free at the bottom of the report form so the floating navigation bar does not cover its last fields.
 private val BOTTOM_BAR_SPACE = 110.dp
@@ -76,7 +77,9 @@ fun MainScreen() {
                     .padding(bottom = BOTTOM_BAR_SPACE)
             )
 
-            Screen.Map -> PlaceholderScreen("Map (à faire par l'équipe)")
+            Screen.Map -> Box(Modifier.fillMaxSize().statusBarsPadding()) {
+                MapScreen()
+            }
             Screen.Profile -> PlaceholderScreen("Profile (bientôt disponible)")
         }
 

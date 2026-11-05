@@ -71,6 +71,9 @@ interface ReportApi {
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 50
     ): PageResponse<ReportDto>
+
+    @GET("reports")
+    suspend fun getReports(): List<ReportResponse>
 }
 
 object ApiClient {
