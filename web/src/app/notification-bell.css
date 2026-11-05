@@ -1,0 +1,113 @@
+.bell {
+  position: relative;
+  display: inline-block;
+}
+
+.bell-button {
+  position: relative;
+  padding: 0.5rem 0.75rem;
+  font-size: 1.25rem;
+  background: transparent;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  padding: 0 5px;
+  font-size: 0.75rem;
+  line-height: 20px;
+  color: #fff;
+  text-align: center;
+  background: #d32f2f;
+  border-radius: 10px;
+}
+
+.panel {
+  position: absolute;
+  left: 0;
+  z-index: 10;
+  width: 320px;
+  max-height: 400px;
+  margin-top: 0.5rem;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.link {
+  font-size: 0.85rem;
+  color: #1565c0;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+li {
+  border-bottom: 1px solid #eee;
+}
+
+li.unread {
+  background: #e8f1fd;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.type {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+}
+
+.date {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.empty,
+.error {
+  padding: 1rem;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.error {
+  color: #b71c1c;
+  background: #fdecea;
+}

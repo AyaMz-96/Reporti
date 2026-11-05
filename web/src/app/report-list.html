@@ -1,0 +1,68 @@
+<section class="reports">
+  <h2>Reports</h2>
+
+  <div class="filters">
+    <input
+      type="search"
+      placeholder="Search by title or description"
+      aria-label="Search reports"
+      [value]="search()"
+      (input)="onSearch($event)"
+    />
+
+    <select aria-label="Category" [value]="categoryId() ?? ''" (change)="onCategory($event)">
+      <option value="">All categories</option>
+      @for (category of categories(); track category.id) {
+        <option [value]="category.id">{{ category.name }}</option>
+      }
+    </select>
+
+    <select aria-label="Status" [value]="status() ?? ''" (change)="onStatus($event)">
+      <option value="">All statuses</option>
+      @for (item of statuses; track item) {
+        <option [value]="item">{{ item.replace('_', ' ') }}</option>
+      }
+    </select>
+
+    <select aria-label="Priority" [value]="priority() ?? ''" (change)="onPriority($event)">
+      <option value="">All priorities</option>
+      @for (item of priorities; track item) {
+        <option [value]="item">{{ item }}</option>
+      }
+    </select>
+
+    <button type="button" (click)="reset()">Reset</button>
+  </div>
+
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="empty">Loading...</p>
+  } @else if (filtered().length === 0 && !errorMessage()) {
+    <p class="empty">No reports match your search.</p>
+  } @else {
+    <p class="count">{{ filtered().length }} report(s)</p>
+
+    <ul>
+      @for (report of pageItems(); track report.id) {
+        <li>
+          <div class="title">{{ report.title }}</div>
+          <div class="meta">
+            <span class="tag">{{ categoryName(report.categoryId) }}</span>
+            <span class="tag">{{ report.status.replace('_', ' ') }}</span>
+            <span class="tag" [class.urgent]="report.priority === 'URGENT'">{{ report.priority }}</span>
+            <span>{{ report.createdAt | date: 'short' }}</span>
+          </div>
+        </li>
+      }
+    </ul>
+
+    <div class="pagination">
+      <button type="button" [disabled]="page() === 0" (click)="previous()">Previous</button>
+      <span>Page {{ page() + 1 }} of {{ pageCount() }}</span>
+      <button type="button" [disabled]="page() >= pageCount() - 1" (click)="next()">Next</button>
+    </div>
+  }
+</section>
