@@ -13,19 +13,26 @@ import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
-import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
 
-
+/**
+ * Mirrors the Spring controllers in com.example.Reporti.controller exactly.
+ * The citizen is identified by the X-Citizen-Id header (added in ApiClient), not by a userId query parameter.
+ */
 interface ReportApi {
 
-    // ----- Report submission -----
+    // ----- Reference data -----
 
     @GET("categories")
     suspend fun getCategories(): List<Category>
 
     @GET("sectors")
     suspend fun getSectors(): List<Sector>
+
+    // ----- Reports -----
+
+    @GET("reports")
+    suspend fun getReports(): List<ReportResponse>
 
     @POST("reports")
     suspend fun createReport(@Body request: CreateReportRequest): ReportResponse
@@ -38,42 +45,17 @@ interface ReportApi {
         @Part files: List<MultipartBody.Part>,
     ): List<String>
 
-    // ----- Notifications -----
+    // ----- Notifications (plain list, no paging) -----
 
     @GET("notifications")
-    suspend fun notifications(
-        @Query("userId") userId: Long,
-        @Query("unread") unread: Boolean = false,
-        @Query("page") page: Int = 0,
-        @Query("size") size: Int = 50
-    ): PageResponse<NotificationDto>
+    suspend fun notifications(): List<NotificationDto>
 
-    @GET("notifications/unread-count")
-    suspend fun unreadCount(@Query("userId") userId: Long): CountResponse
-
+    // The backend answers 204 No Content, so these return Response<> to avoid parsing an empty body
     @PATCH("notifications/{id}/read")
-    suspend fun markRead(
-        @Path("id") id: Long,
-        @Query("userId") userId: Long
-    ): Response<ResponseBody>
+    suspend fun markRead(@Path("id") id: Long): Response<ResponseBody>
 
     @PATCH("notifications/read-all")
-    suspend fun markAllRead(@Query("userId") userId: Long): Map<String, Int>
-
-    // ----- Search and filter -----
-
-    @GET("reports/search")
-    suspend fun searchReports(
-        @Query("userId") userId: Long,
-        @Query("q") q: String? = null,
-        @Query("status") status: String? = null,
-        @Query("priority") priority: String? = null,
-        @Query("page") page: Int = 0,
-        @Query("size") size: Int = 50
-    ): PageResponse<ReportDto>
-
-    @GET("reports")
-    suspend fun getReports(): List<ReportResponse>
+    suspend fun markAllRead(): Response<ResponseBody>
 }
 
 object ApiClient {

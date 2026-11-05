@@ -17,24 +17,46 @@ fun fetchCurrentLocation(
 ) {
     val manager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-    val provider = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER, "fused")
-        .firstOrNull { runCatching { manager.isProviderEnabled(it) }.getOrDefault(false) }
+    val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER)
+        .filter { runCatching { manager.isProviderEnabled(it) }.getOrDefault(false) }
 
-    if (provider == null) {
+    if (providers.isEmpty()) {
         onFailure("Location is turned off on this device. Turn it on or type the coordinates instead.")
         return
     }
 
+    // Check last known location first across enabled providers for an immediate result
+    var bestLocation: Location? = null
+    for (p in providers) {
+        val loc = runCatching { manager.getLastKnownLocation(p) }.getOrNull() ?: continue
+        if (bestLocation == null || loc.accuracy < bestLocation.accuracy || loc.time > bestLocation.time) {
+            bestLocation = loc
+        }
+    }
+
+    if (bestLocation != null) {
+        onLocation(bestLocation)
+        return
+    }
+
+    // Fallback: request a new location from the primary provider
+    val primaryProvider = providers.firstOrNull { it != LocationManager.PASSIVE_PROVIDER } ?: providers.first()
     LocationManagerCompat.getCurrentLocation(
         manager,
-        provider,
+        primaryProvider,
         null as CancellationSignal?,
         ContextCompat.getMainExecutor(context)
     ) { location ->
         if (location != null) {
             onLocation(location)
         } else {
-            onFailure("Could not get your location. Type the coordinates instead.")
+            val lastLoc = providers.mapNotNull { runCatching { manager.getLastKnownLocation(it) }.getOrNull() }
+                .maxByOrNull { it.time }
+            if (lastLoc != null) {
+                onLocation(lastLoc)
+            } else {
+                onFailure("Could not get your location. Type the coordinates instead.")
+            }
         }
     }
 }

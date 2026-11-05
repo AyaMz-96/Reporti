@@ -60,7 +60,8 @@ object ReportRepository {
 fun Throwable.toUserMessage(): String = when (this) {
     is HttpException -> readServerMessage() ?: "Request failed (${code()})"
     is UploadException -> message ?: "Could not prepare the files"
-    is IOException -> "Cannot reach the server. Is the backend running?"
+    is IOException -> "Cannot reach the server at ${Config.API_BASE_URL} (${javaClass.simpleName}: ${message ?: "no details"}). " +
+        "Check that the backend is running and that this address matches your device."
     else -> "Something went wrong"
 }
 

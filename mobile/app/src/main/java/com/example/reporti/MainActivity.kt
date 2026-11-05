@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,9 +29,6 @@ import com.example.reporti.ui.notifications.NotificationViewModel
 import com.example.reporti.ui.notifications.NotificationsScreen
 import com.example.reporti.ui.theme.ReportiTheme
 import com.example.reporti.ui.map.MapScreen
-
-// Room kept free at the bottom of the report form so the floating navigation bar does not cover its last fields.
-private val BOTTOM_BAR_SPACE = 110.dp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,7 +42,7 @@ enum class Screen(val title: String, @DrawableRes val icon: Int) {
     Home("Home", R.drawable.ic_home),
     Report("Report", R.drawable.ic_edit),
     Map("Map", R.drawable.ic_map),
-    Notifications("Alertes", R.drawable.ic_notifications),
+    Notifications("Notifications", R.drawable.ic_notifications),
     Profile("Profile", R.drawable.ic_person)
 }
 
@@ -55,6 +54,10 @@ fun MainScreen() {
     val homeVm: HomeViewModel = viewModel()
     val notifState by notificationVm.state.collectAsState()
 
+    // Real height of the floating bar (including its margins and the system nav inset), so screens can leave exactly that much room
+    var navBarHeightPx by remember { mutableIntStateOf(0) }
+    val navBarHeight = with(LocalDensity.current) { navBarHeightPx.toDp() }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -63,7 +66,10 @@ fun MainScreen() {
         // The app draws edge to edge, so each screen keeps clear of the status bar itself.
         when (selectedTab) {
             Screen.Home -> Box(Modifier.fillMaxSize().statusBarsPadding()) {
-                HomeScreen(homeVm)
+                HomeScreen(
+                    vm = homeVm,
+                    bottomContentPadding = navBarHeight + 16.dp
+                )
             }
 
             Screen.Notifications -> Box(Modifier.fillMaxSize().statusBarsPadding()) {
@@ -71,22 +77,25 @@ fun MainScreen() {
             }
 
             // Its ViewModel is scoped to the activity, so the typed values survive switching tabs.
+            // The extra room is added INSIDE the scrolling content, so the form scrolls under the bar and the last button can be pulled above it.
             Screen.Report -> ReportFormScreen(
-                modifier = Modifier
-                    .statusBarsPadding()
-                    .padding(bottom = BOTTOM_BAR_SPACE)
+                modifier = Modifier.statusBarsPadding(),
+                bottomContentPadding = navBarHeight + 16.dp
             )
 
             Screen.Map -> Box(Modifier.fillMaxSize().statusBarsPadding()) {
-                MapScreen()
+                MapScreen(
+                    bottomContentPadding = navBarHeight + 16.dp
+                )
             }
-            Screen.Profile -> PlaceholderScreen("Profile (bientôt disponible)")
+            Screen.Profile -> PlaceholderScreen("Profile (coming soon)")
         }
 
         Surface(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
+                .onSizeChanged { navBarHeightPx = it.height }
                 .navigationBarsPadding()
                 .padding(horizontal = 12.dp, vertical = 16.dp),
             shape = RoundedCornerShape(36.dp),
