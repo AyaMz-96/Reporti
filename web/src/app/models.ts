@@ -35,3 +35,22 @@ export interface ReportResponse {
   createdAt: string;
   mediaUrls: string[];
 }
+export type NotificationType =
+  | 'STATUS_CHANGED'
+  | 'NEW_COMMENT'
+  | 'ASSIGNED'
+  | 'URGENT_UPDATE'
+  | 'NEW_REPORT'
+  | 'DISPUTE'
+  | 'AGENT_REFUSAL'
+  | 'SYSTEM_ALERT';
+
+
+export interface AppNotification {
+  id: number;
+  message: string;
+  createdAt: string;
+  isRead: boolean;
+  type?: NotificationType;
+  reportId?: number;
+}

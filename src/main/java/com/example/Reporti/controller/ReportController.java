@@ -43,6 +43,10 @@ public class ReportController {
                                     @RequestParam("files") List<MultipartFile> files) {
         return reportService.addMedia(id, citizenId, files);
     }
+        @GetMapping
+    public List<ReportResponse> list() {
+        return reportService.list();
+    }
 
     @GetMapping("/{id}")
     public ReportResponse get(@PathVariable Long id) {
