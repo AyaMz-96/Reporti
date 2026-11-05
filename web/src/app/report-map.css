@@ -26,6 +26,12 @@
   border-radius: 50%;
 }
 
+.legend i.ring {
+  box-sizing: border-box;
+  background: transparent;
+  border: 3px solid #ccc;
+}
+
 .hint,
 .count,
 .empty {

@@ -42,7 +42,12 @@
   @if (showError(form.controls.sectorId)) {
     <small class="error">Choose a sector</small>
   }
-
+    <label for="priority">Priority</label>
+  <select id="priority" formControlName="priority">
+    @for (item of priorities; track item) {
+      <option [ngValue]="item">{{ item }}</option>
+    }
+  </select>
   <fieldset>
     <legend>Location</legend>
     <button type="button" class="secondary" (click)="useMyLocation()" [disabled]="locating() || form.disabled">

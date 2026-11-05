@@ -12,7 +12,7 @@ import {
 import * as L from 'leaflet';
 import { forkJoin } from 'rxjs';
 
-import { Category, ReportResponse, ReportStatus } from './models';
+import { PriorityLevel, Category, ReportResponse, ReportStatus } from './models';
 import { readError } from './report-api';
 import { ReportEvents } from './report-events';
 import { ReportListApi } from './report-list-api';
@@ -26,6 +26,11 @@ export const STATUS_COLORS: Record<ReportStatus, string> = {
   IN_PROGRESS: '#f59e0b',
   RESOLVED: '#16a34a',
   REJECTED: '#6b7280',
+};
+export const PRIORITY_STYLES: Record<PriorityLevel, { color: string; weight: number; radius: number }> = {
+  LOW: { color: '#ffffff', weight: 2, radius: 8 },
+  NORMAL: { color: '#facc15', weight: 3, radius: 8 },
+  URGENT: { color: '#dc2626', weight: 4, radius: 12 },
 };
 
 @Component({
@@ -53,8 +58,13 @@ export class ReportMap implements OnInit {
   readonly legend = Object.entries(STATUS_COLORS).map(([status, color]) => ({
     label: status.replace('_', ' '),
     color,
+    
   }));
-
+  readonly priorityLegend = [
+    { label: 'Low', color: '#cbd5e1' },
+    { label: 'Normal', color: '#facc15' },
+    { label: 'Urgent', color: '#dc2626' },
+  ];
   constructor() {
     afterNextRender(() => {
       this.map = L.map(this.container().nativeElement).setView(TUNISIA_CENTER, TUNISIA_ZOOM);
@@ -119,25 +129,29 @@ export class ReportMap implements OnInit {
       const point: L.LatLngTuple = [report.latitude, report.longitude];
       points.push(point);
 
-      L.circleMarker(point, {
-        radius: report.priority === 'URGENT' ? 11 : 8,
-        color: '#ffffff',
-        weight: 2,
+      const style = PRIORITY_STYLES[report.priority] ?? PRIORITY_STYLES.NORMAL;
+      const marker = L.circleMarker(point, {
+        radius: style.radius,
+        color: style.color,
+        weight: style.weight,
         fillColor: STATUS_COLORS[report.status] ?? '#6b7280',
         fillOpacity: 0.95,
       })
         .bindPopup(this.popupContent(report))
         .addTo(this.markers);
-    }
 
+      // Keep urgent dots on top so a crowd of normal ones never hides them
+      if (report.priority === 'URGENT') {
+        marker.bringToFront();
+      }
     if (points.length > 0) {
       this.map.fitBounds(L.latLngBounds(points), { padding: [40, 40], maxZoom: 15 });
     }
-  }
+  }}
 
   /** Built with DOM nodes and textContent so report text is never interpreted as HTML. */
   private popupContent(report: ReportResponse): HTMLElement {
-    const category =
+  const category =
       this.categories().find((item) => item.id === report.categoryId)?.name ?? `#${report.categoryId}`;
 
     const root = document.createElement('div');

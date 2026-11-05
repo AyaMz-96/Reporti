@@ -1,5 +1,7 @@
 package com.example.Reporti.dto;
 
+import com.example.Reporti.model.PriorityLevel;
+
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -29,6 +31,8 @@ public record CreateReportRequest(
         Long categoryId,
 
         @NotNull(message = "Sector is required")
-        Long sectorId
+        Long sectorId,
+
+        PriorityLevel priority
 ) {
 }

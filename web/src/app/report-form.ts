@@ -8,7 +8,7 @@ import {
 } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
-import { Category, Sector } from './models';
+import { Category, PriorityLevel, Sector } from './models';
 import { LocationPicker, PickedLocation } from './location-picker';
 import { ReportApi, readError } from './report-api';
 
@@ -29,12 +29,13 @@ export class ReportForm implements OnInit {
 
   /** Emits the id of the new report once it (and its photos) were sent. */
   readonly submitted = output<number>();
-
+  readonly priorities: PriorityLevel[] = ['URGENT', 'NORMAL', 'LOW'];
   readonly form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(150)]],
     description: ['', [Validators.required, Validators.maxLength(2000)]],
     categoryId: this.fb.control<number | null>(null, Validators.required),
     sectorId: this.fb.control<number | null>(null, Validators.required),
+    priority: this.fb.control<PriorityLevel>('NORMAL', Validators.required),
     latitude: this.fb.control<number | null>(null, [
       Validators.required,
       Validators.min(-90),
@@ -180,6 +181,7 @@ export class ReportForm implements OnInit {
         longitude: value.longitude!,
         categoryId: value.categoryId!,
         sectorId: value.sectorId!,
+        priority: value.priority,
       })
       .subscribe({
         next: (report) => this.uploadPhotos(report.id),

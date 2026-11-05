@@ -9,7 +9,10 @@
     @for (item of legend; track item.label) {
       <span><i [style.background]="item.color"></i>{{ item.label }}</span>
     }
-    <span class="hint">Larger dot = urgent</span>
+        <span class="hint">Outline:</span>
+    @for (item of priorityLegend; track item.label) {
+      <span><i class="ring" [style.border-color]="item.color"></i>{{ item.label }}</span>
+    }
   </div>
 
   @if (loading()) {

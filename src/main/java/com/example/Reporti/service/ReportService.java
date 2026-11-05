@@ -57,6 +57,9 @@ public class ReportService {
         report.setLongitude(request.longitude());
         report.setCategoryId(request.categoryId());
         report.setSectorId(request.sectorId());
+        if (request.priority() != null) {
+            report.setPriority(request.priority());
+        }
         report.setCitizenId(citizenId);
 
         Report saved = reportRepository.save(report);

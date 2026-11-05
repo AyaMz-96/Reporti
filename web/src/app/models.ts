@@ -17,6 +17,7 @@ export interface CreateReportRequest {
   longitude: number;
   categoryId: number;
   sectorId: number;
+  priority: PriorityLevel;
 }
 
 export type ReportStatus = 'RECEIVED' | 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED';
