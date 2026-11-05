@@ -1,0 +1,37 @@
+.map-page {
+  font-family: system-ui, sans-serif;
+}
+
+.map {
+  height: 65vh;
+  min-height: 360px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  isolation: isolate;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.legend i {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-right: 0.3rem;
+  border-radius: 50%;
+}
+
+.hint,
+.count,
+.empty {
+  color: #666;
+}
+
+.error {
+  color: #b91c1c;
+}

@@ -1,9 +1,10 @@
 import { Routes } from '@angular/router';
 
 import { ReportList } from './report-list';
+import { ReportMap } from './report-map';
 
 export const routes: Routes = [
   { path: '', component: ReportList, title: 'Reporti - Reports' },
-  // The map page is added in a later commit
+  { path: 'map', component: ReportMap, title: 'Reporti - Map' },
   { path: '**', redirectTo: '' },
 ];
