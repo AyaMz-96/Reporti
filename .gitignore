@@ -1,3 +1,25 @@
+<<<<<<< HEAD
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+=======
 # Java & Maven / Gradle build outputs
 target/
 build/
@@ -13,10 +35,29 @@ build/
 .sts4-cache
 .apt_generated
 .factorypath
+>>>>>>> ecc1b01929dbabd39ac4e6fa061c929dd8942668
 .idea
 *.iws
 *.iml
 *.ipr
+<<<<<<< HEAD
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Kotlin ###
+.kotlin
+=======
 .vscode/
 
 # Logs & Environment
@@ -29,3 +70,4 @@ build/
 node_modules/
 dist/
 .cache/
+>>>>>>> ecc1b01929dbabd39ac4e6fa061c929dd8942668
