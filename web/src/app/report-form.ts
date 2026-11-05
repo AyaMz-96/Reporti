@@ -1,4 +1,5 @@
-import { output, Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, output, signal, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   NonNullableFormBuilder,
@@ -8,6 +9,7 @@ import {
 import { forkJoin } from 'rxjs';
 
 import { Category, Sector } from './models';
+import { LocationPicker, PickedLocation } from './location-picker';
 import { ReportApi, readError } from './report-api';
 
 // Same limits as spring.servlet.multipart.* in application.properties
@@ -16,7 +18,7 @@ const MAX_TOTAL_BYTES = 30 * 1024 * 1024;
 
 @Component({
   selector: 'app-report-form',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, LocationPicker],
   templateUrl: './report-form.html',
   styleUrl: './report-form.css',
 })
@@ -24,6 +26,8 @@ export class ReportForm implements OnInit {
   private readonly api = inject(ReportApi);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly photoInput = viewChild<ElementRef<HTMLInputElement>>('photoInput');
+
+  /** Emits the id of the new report once it (and its photos) were sent. */
   readonly submitted = output<number>();
 
   readonly form = this.fb.group({
@@ -41,6 +45,14 @@ export class ReportForm implements OnInit {
       Validators.min(-180),
       Validators.max(180),
     ]),
+  });
+
+  // Mirror the coordinates as signals so the map pin follows the inputs (typed, picked or geolocated)
+  readonly latitude = toSignal(this.form.controls.latitude.valueChanges, {
+    initialValue: this.form.controls.latitude.value,
+  });
+  readonly longitude = toSignal(this.form.controls.longitude.valueChanges, {
+    initialValue: this.form.controls.longitude.value,
   });
 
   // The app is zoneless, so everything that changes after an async call must be a signal
@@ -82,6 +94,13 @@ export class ReportForm implements OnInit {
 
   formatSize(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  onLocationPicked(location: PickedLocation): void {
+    this.form.patchValue(location);
+    this.form.controls.latitude.markAsTouched();
+    this.form.controls.longitude.markAsTouched();
+    this.locationError.set(null);
   }
 
   useMyLocation(): void {

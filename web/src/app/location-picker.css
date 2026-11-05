@@ -1,0 +1,18 @@
+:host {
+  display: block;
+  margin: 0.5rem 0;
+}
+
+.picker-map {
+  height: 260px;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  /* keeps Leaflet's internal z-indexes below the modal's close button */
+  isolation: isolate;
+}
+
+.hint {
+  display: block;
+  margin-top: 0.25rem;
+  color: #666;
+}

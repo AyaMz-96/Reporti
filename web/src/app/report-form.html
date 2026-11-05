@@ -51,6 +51,12 @@
     @if (locationError()) {
       <small class="error">{{ locationError() }}</small>
     }
+    <app-location-picker
+      [latitude]="latitude()"
+      [longitude]="longitude()"
+      [disabled]="form.disabled"
+      (picked)="onLocationPicked($event)"
+    />
     <div class="row">
       <div>
         <label for="latitude">Latitude</label>
