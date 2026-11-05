@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -19,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -26,6 +28,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,10 +39,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.reporti.data.PriorityLevel
-import androidx.compose.material3.FilterChip
+import org.osmdroid.config.Configuration
+import org.osmdroid.events.MapEventsReceiver
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.MapEventsOverlay
+import org.osmdroid.views.overlay.Marker
 
 @Composable
 fun ReportFormScreen(
@@ -184,6 +195,13 @@ fun ReportFormScreen(
             )
         }
 
+        LocationPickerMap(
+            latitude = viewModel.latitude.replace(',', '.').toDoubleOrNull(),
+            longitude = viewModel.longitude.replace(',', '.').toDoubleOrNull(),
+            enabled = !locked,
+            onPicked = viewModel::onLocationPicked,
+        )
+
         Text("Photos or videos (optional)", style = MaterialTheme.typography.titleSmall)
         OutlinedButton(
             onClick = {
@@ -289,4 +307,70 @@ private fun Banner(text: String, isError: Boolean) {
     ) {
         Text(text, modifier = Modifier.padding(12.dp))
     }
+}
+
+@Composable
+private fun LocationPickerMap(
+    latitude: Double?,
+    longitude: Double?,
+    enabled: Boolean,
+    onPicked: (Double, Double) -> Unit,
+) {
+    val context = LocalContext.current
+
+    remember {
+        Configuration.getInstance().apply {
+            userAgentValue = context.packageName
+            osmdroidBasePath = java.io.File(context.cacheDir, "osmdroid")
+            osmdroidTileCache = java.io.File(context.cacheDir, "osmdroid/tiles")
+        }
+        true
+    }
+
+    val mapView = remember {
+        MapView(context).apply {
+            setTileSource(TileSourceFactory.MAPNIK)
+            setMultiTouchControls(true)
+            controller.setZoom(6.0)
+            controller.setCenter(GeoPoint(33.9, 9.5))
+        }
+    }
+    val marker = remember { Marker(mapView).apply { setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM) } }
+
+    DisposableEffect(Unit) {
+        mapView.onResume()
+        val listener = MapEventsOverlay(object : MapEventsReceiver {
+            override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
+                if (enabled) onPicked(p.latitude, p.longitude)
+                return true
+            }
+            override fun longPressHelper(p: GeoPoint) = false
+        })
+        mapView.overlays.add(listener)
+        mapView.overlays.add(marker)
+        onDispose {
+            mapView.overlays.clear()
+            mapView.onPause()
+            mapView.onDetach()
+        }
+    }
+
+    LaunchedEffect(latitude, longitude) {
+        if (latitude != null && longitude != null) {
+            val p = GeoPoint(latitude, longitude)
+            marker.position = p
+            mapView.controller.animateTo(p, 16.0, 400L)
+            mapView.invalidate()
+        } else {
+            marker.position = null
+            mapView.invalidate()
+        }
+    }
+
+    AndroidView(
+        factory = { mapView },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(260.dp),
+    )
 }

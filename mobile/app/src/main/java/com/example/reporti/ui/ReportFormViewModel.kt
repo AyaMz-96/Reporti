@@ -120,6 +120,12 @@ class ReportFormViewModel(application: Application) : AndroidViewModel(applicati
         locationError = message
     }
 
+    fun onLocationPicked(lat: Double, lng: Double) {
+        latitude = String.format(Locale.US, "%.6f", lat)
+        longitude = String.format(Locale.US, "%.6f", lng)
+        locationError = null
+    }
+
     fun submit() {
         if (submitting) return
         errorMessage = null
