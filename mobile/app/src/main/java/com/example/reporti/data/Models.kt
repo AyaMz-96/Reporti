@@ -14,6 +14,8 @@ data class Sector(
     val zone: String?,
 )
 
+enum class PriorityLevel { URGENT, NORMAL, LOW }
+
 data class CreateReportRequest(
     val title: String,
     val description: String,
@@ -21,6 +23,7 @@ data class CreateReportRequest(
     val longitude: Double,
     val categoryId: Long,
     val sectorId: Long,
+    val priority: PriorityLevel = PriorityLevel.NORMAL,
 )
 
 data class ReportResponse(

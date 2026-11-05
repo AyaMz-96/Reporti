@@ -37,6 +37,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.reporti.data.PriorityLevel
+import androidx.compose.material3.FilterChip
 
 @Composable
 fun ReportFormScreen(
@@ -133,6 +135,18 @@ fun ReportFormScreen(
             enabled = !locked,
             error = viewModel.sectorError.takeIf { viewModel.showErrors },
         )
+
+        Text("Priority", style = MaterialTheme.typography.labelLarge)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            PriorityLevel.entries.forEach { level ->
+                FilterChip(
+                    selected = viewModel.priority == level,
+                    onClick = { viewModel.priority = level },
+                    label = { Text(level.name) },
+                    enabled = !locked,
+                )
+            }
+        }
 
         Text("Location", style = MaterialTheme.typography.titleSmall)
         OutlinedButton(
