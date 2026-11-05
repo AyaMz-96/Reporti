@@ -1,9 +1,10 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 
 import { Category, PriorityLevel, ReportResponse, ReportStatus } from './models';
 import { readError } from './report-api';
+import { ReportEvents } from './report-events';
 import { ReportListApi } from './report-list-api';
 
 const PAGE_SIZE = 5;
@@ -16,6 +17,7 @@ const PAGE_SIZE = 5;
 })
 export class ReportList implements OnInit {
   private readonly api = inject(ReportListApi);
+  private readonly events = inject(ReportEvents);
 
   readonly statuses: ReportStatus[] = ['RECEIVED', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'];
   readonly priorities: PriorityLevel[] = ['URGENT', 'NORMAL', 'LOW'];
@@ -55,6 +57,18 @@ export class ReportList implements OnInit {
     const start = this.page() * PAGE_SIZE;
     return this.filtered().slice(start, start + PAGE_SIZE);
   });
+
+  constructor() {
+    // Reload the list whenever a report is created from the modal
+    effect(() => {
+      if (this.events.created() > 0) {
+        this.api.getReports().subscribe({
+          next: (reports) => this.reports.set(reports),
+          error: (error) => this.errorMessage.set(`Could not load reports: ${readError(error)}`),
+        });
+      }
+    });
+  }
 
   ngOnInit(): void {
     forkJoin({

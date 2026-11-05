@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import { output, Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import {
   AbstractControl,
   NonNullableFormBuilder,
@@ -24,6 +24,7 @@ export class ReportForm implements OnInit {
   private readonly api = inject(ReportApi);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly photoInput = viewChild<ElementRef<HTMLInputElement>>('photoInput');
+  readonly submitted = output<number>();
 
   readonly form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(150)]],
@@ -203,6 +204,6 @@ export class ReportForm implements OnInit {
       input.nativeElement.value = '';
     }
 
-    this.successMessage.set(`Report #${reportId} submitted. Thank you!`);
+    this.submitted.emit(reportId);
   }
 }

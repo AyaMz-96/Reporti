@@ -1,6 +1,36 @@
-<app-notification-bell />
+<header class="navbar">
+  <a class="brand" routerLink="/">Reporti</a>
+
+  <nav>
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+    <!-- The Map link is added in a later commit -->
+  </nav>
+
+  <div class="actions">
+    <button type="button" class="new-report" (click)="openForm()">+ New report</button>
+    <app-notification-bell />
+  </div>
+</header>
 
 <main>
-  <app-report-list />
-  <app-report-form />
+  <router-outlet />
 </main>
+
+@if (toast()) {
+  <div class="toast" role="status">{{ toast() }}</div>
+}
+
+@if (formOpen()) {
+  <div class="backdrop" (click)="closeForm()">
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="New report"
+      (click)="$event.stopPropagation()"
+    >
+      <button type="button" class="close" aria-label="Close" (click)="closeForm()">×</button>
+      <app-report-form (submitted)="onSubmitted($event)" />
+    </div>
+  </div>
+}
