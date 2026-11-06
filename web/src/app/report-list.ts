@@ -5,12 +5,13 @@ import { forkJoin } from 'rxjs';
 import { Category, PriorityLevel, ReportResponse, ReportStatus } from './models';
 import { readError } from './report-api';
 import { ReportListApi } from './report-list-api';
+import { LoadingSpinner } from './loading-spinner/loading-spinner';
 
 const PAGE_SIZE = 5;
 
 @Component({
   selector: 'app-report-list',
-  imports: [DatePipe],
+  imports: [DatePipe, LoadingSpinner],
   templateUrl: './report-list.html',
   styleUrl: './report-list.css',
 })
@@ -31,6 +32,7 @@ export class ReportList implements OnInit {
   readonly status = signal<ReportStatus | null>(null);
   readonly priority = signal<PriorityLevel | null>(null);
   readonly page = signal(0);
+  readonly filterOpen = signal(false);
 
   readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -106,6 +108,14 @@ export class ReportList implements OnInit {
     this.status.set(null);
     this.priority.set(null);
     this.page.set(0);
+  }
+
+  toggleFilters(): void {
+    this.filterOpen.update((open) => !open);
+  }
+
+  closeFilters(): void {
+    this.filterOpen.set(false);
   }
 
   previous(): void {

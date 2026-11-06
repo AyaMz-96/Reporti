@@ -33,31 +33,15 @@ data class ReportResponse(
     val longitude: Double,
     val categoryId: Long,
     val sectorId: Long,
-    val createdAt: String,
-    val mediaUrls: List<String>,
+    val createdAt: String?,
+    val mediaUrls: List<String> = emptyList(),
 )
-
-// ----- Home (search/filter) and notifications -----
-
-data class PageResponse<T>(val content: List<T>, val totalElements: Long)
 
 data class NotificationDto(
     val id: Long,
     val message: String,
-    val type: String,
-    @SerializedName(value = "isRead", alternate = ["read"]) val isRead: Boolean,
-    val createdAt: String?,
-    val reportId: Long?
+    val createdAt: String? = null,
+    @SerializedName(value = "isRead", alternate = ["read"]) val isRead: Boolean = false,
+    val type: String? = null,
+    val reportId: Long? = null
 )
-
-data class ReportDto(
-    val id: Long,
-    val description: String,
-    val status: String,
-    val priority: String,
-    val category: String,
-    val sector: String,
-    val createdAt: String?
-)
-
-data class CountResponse(val count: Long)

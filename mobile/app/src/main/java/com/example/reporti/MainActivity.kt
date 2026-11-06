@@ -23,6 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.reporti.ui.ReportFormScreen
 import com.example.reporti.ui.home.HomeScreen
 import com.example.reporti.ui.home.HomeViewModel
+import com.example.reporti.ui.map.MapScreen
 import com.example.reporti.ui.notifications.NotificationViewModel
 import com.example.reporti.ui.notifications.NotificationsScreen
 import com.example.reporti.ui.theme.ReportiTheme
@@ -76,7 +77,10 @@ fun MainScreen() {
                     .padding(bottom = BOTTOM_BAR_SPACE)
             )
 
-            Screen.Map -> PlaceholderScreen("Map (à faire par l'équipe)")
+            Screen.Map -> Box(Modifier.fillMaxSize().statusBarsPadding()) {
+                MapScreen(bottomContentPadding = BOTTOM_BAR_SPACE)
+            }
+
             Screen.Profile -> PlaceholderScreen("Profile (bientôt disponible)")
         }
 

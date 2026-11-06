@@ -1,37 +1,84 @@
 <section class="reports">
-  <h2>Reports</h2>
+  <div class="reports-header">
+    <div class="heading">
+      <p class="eyebrow">Community activity</p>
+      <h1>Reports</h1>
+      <p>Browse and filter issues reported by the community.</p>
+    </div>
 
-  <div class="filters">
-    <input
-      type="search"
-      placeholder="Search by title or description"
-      aria-label="Search reports"
-      [value]="search()"
-      (input)="onSearch($event)"
-    />
+    <div class="toolbar">
+      <label class="search-box">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m16.5 16.5 4 4"></path>
+        </svg>
+        <input
+          type="search"
+          placeholder="Search reports..."
+          aria-label="Search reports"
+          [value]="search()"
+          (input)="onSearch($event)"
+        />
+      </label>
 
-    <select aria-label="Category" [value]="categoryId() ?? ''" (change)="onCategory($event)">
-      <option value="">All categories</option>
-      @for (category of categories(); track category.id) {
-        <option [value]="category.id">{{ category.name }}</option>
-      }
-    </select>
+      <button type="button" class="filter-button" [attr.aria-expanded]="filterOpen()" (click)="toggleFilters()">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 6h16M7 12h10m-7 6h4"></path>
+        </svg>
+        Filter
+        @if (categoryId() !== null || status() !== null || priority() !== null) {
+          <span class="active-dot"></span>
+        }
+      </button>
+    </div>
 
-    <select aria-label="Status" [value]="status() ?? ''" (change)="onStatus($event)">
-      <option value="">All statuses</option>
-      @for (item of statuses; track item) {
-        <option [value]="item">{{ item.replace('_', ' ') }}</option>
-      }
-    </select>
+    @if (filterOpen()) {
+      <div class="filter-backdrop" (click)="closeFilters()"></div>
+      <aside class="filter-window" role="dialog" aria-label="Report filters">
+        <div class="filter-window-header">
+          <div>
+            <span class="filter-kicker">Refine results</span>
+            <h3>Filters</h3>
+          </div>
+          <button type="button" class="close-button" aria-label="Close filters" (click)="closeFilters()">×</button>
+        </div>
 
-    <select aria-label="Priority" [value]="priority() ?? ''" (change)="onPriority($event)">
-      <option value="">All priorities</option>
-      @for (item of priorities; track item) {
-        <option [value]="item">{{ item }}</option>
-      }
-    </select>
+        <label>
+          Category
+          <select [value]="categoryId() ?? ''" (change)="onCategory($event)">
+            <option value="">All categories</option>
+            @for (category of categories(); track category.id) {
+              <option [value]="category.id">{{ category.name }}</option>
+            }
+          </select>
+        </label>
 
-    <button type="button" (click)="reset()">Reset</button>
+        <label>
+          Status
+          <select [value]="status() ?? ''" (change)="onStatus($event)">
+            <option value="">All statuses</option>
+            @for (item of statuses; track item) {
+              <option [value]="item">{{ item.replace('_', ' ') }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Priority
+          <select [value]="priority() ?? ''" (change)="onPriority($event)">
+            <option value="">All priorities</option>
+            @for (item of priorities; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+        </label>
+
+        <div class="filter-actions">
+          <button type="button" class="reset-button" (click)="reset()">Reset</button>
+          <button type="button" class="apply-button" (click)="closeFilters()">Show {{ filtered().length }} reports</button>
+        </div>
+      </aside>
+    }
   </div>
 
   @if (errorMessage()) {
@@ -39,7 +86,9 @@
   }
 
   @if (loading()) {
-    <p class="empty">Loading...</p>
+    <div class="loading-state" role="status">
+      <app-loading-spinner label="Loading reports" />
+    </div>
   } @else if (filtered().length === 0 && !errorMessage()) {
     <p class="empty">No reports match your search.</p>
   } @else {
@@ -60,9 +109,15 @@
     </ul>
 
     <div class="pagination">
-      <button type="button" [disabled]="page() === 0" (click)="previous()">Previous</button>
-      <span>Page {{ page() + 1 }} of {{ pageCount() }}</span>
-      <button type="button" [disabled]="page() >= pageCount() - 1" (click)="next()">Next</button>
+      <button type="button" class="page-button previous" [disabled]="page() === 0" (click)="previous()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+        <span>Previous</span>
+      </button>
+      <span class="page-indicator">Page <strong>{{ page() + 1 }}</strong> of {{ pageCount() }}</span>
+      <button type="button" class="page-button next" [disabled]="page() >= pageCount() - 1" (click)="next()">
+        <span>Next</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+      </button>
     </div>
   }
 </section>

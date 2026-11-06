@@ -125,6 +125,7 @@ private fun NotificationCard(n: NotificationDto, onClick: () -> Unit) {
     } else {
         MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
     }
+    val typeStr = n.type ?: ""
 
     Card(
         modifier = Modifier
@@ -142,15 +143,15 @@ private fun NotificationCard(n: NotificationDto, onClick: () -> Unit) {
                 modifier = Modifier
                     .size(40.dp)
                     .background(
-                        color = notificationColor(n.type).copy(alpha = 0.15f),
+                        color = notificationColor(typeStr).copy(alpha = 0.15f),
                         shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(id = notificationIcon(n.type)),
+                    painter = painterResource(id = notificationIcon(typeStr)),
                     contentDescription = typeLabel(n.type),
-                    tint = notificationColor(n.type),
+                    tint = notificationColor(typeStr),
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -174,14 +175,16 @@ private fun NotificationCard(n: NotificationDto, onClick: () -> Unit) {
     }
 }
 
-private fun typeLabel(type: String): String = when (type) {
+private fun typeLabel(type: String?): String = when (type) {
     "STATUS_CHANGED" -> "Statut"
     "NEW_COMMENT" -> "Commentaire"
     "ASSIGNED" -> "Assignation"
-    "PRIORITY_URGENT" -> "Urgent"
+    "PRIORITY_URGENT", "URGENT_UPDATE" -> "Urgent"
     "NEW_REPORT" -> "Nouveau signalement"
+    "DISPUTE" -> "Litige"
+    "AGENT_REFUSAL" -> "Refus agent"
     "SYSTEM_ALERT" -> "Système"
-    else -> type
+    else -> type ?: "Info"
 }
 
 private fun formatDate(iso: String?): String =

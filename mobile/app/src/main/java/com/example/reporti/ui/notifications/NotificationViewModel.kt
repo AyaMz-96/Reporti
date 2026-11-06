@@ -2,8 +2,9 @@ package com.example.reporti.ui.notifications
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.reporti.data.ApiClient
 import com.example.reporti.data.NotificationDto
+import com.example.reporti.data.ReportRepository
+import com.example.reporti.data.toUserMessage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,10 +22,7 @@ data class NotificationsUiState(
 
 class NotificationViewModel : ViewModel() {
 
-    // TODO: remplacer par l'id de l'utilisateur connecté (après login / JWT)
-    private val userId = 1L
-
-    private val api = ApiClient.api
+    private val repository = ReportRepository
     private val _state = MutableStateFlow(NotificationsUiState())
     val state: StateFlow<NotificationsUiState> = _state.asStateFlow()
 
@@ -50,10 +48,10 @@ class NotificationViewModel : ViewModel() {
     fun markRead(id: Long) {
         viewModelScope.launch {
             try {
-                api.markRead(id, userId)
+                repository.markNotificationRead(id)
                 load()
             } catch (e: Exception) {
-                _state.update { it.copy(error = e.message) }
+                _state.update { it.copy(error = e.toUserMessage()) }
             }
         }
     }
@@ -61,10 +59,10 @@ class NotificationViewModel : ViewModel() {
     fun markAllRead() {
         viewModelScope.launch {
             try {
-                api.markAllRead(userId)
+                repository.markAllNotificationsRead()
                 load()
             } catch (e: Exception) {
-                _state.update { it.copy(error = e.message) }
+                _state.update { it.copy(error = e.toUserMessage()) }
             }
         }
     }
@@ -72,13 +70,18 @@ class NotificationViewModel : ViewModel() {
     private suspend fun load() {
         _state.update { it.copy(loading = true) }
         try {
-            val page = api.notifications(userId, unread = _state.value.unreadOnly)
-            val count = api.unreadCount(userId).count
+            val allNotifications = repository.getNotifications()
+            val totalUnread = allNotifications.count { !it.isRead }.toLong()
+            val filtered = if (_state.value.unreadOnly) {
+                allNotifications.filter { !it.isRead }
+            } else {
+                allNotifications
+            }
             _state.update {
-                it.copy(items = page.content, unreadCount = count, loading = false, error = null)
+                it.copy(items = filtered, unreadCount = totalUnread, loading = false, error = null)
             }
         } catch (e: Exception) {
-            _state.update { it.copy(loading = false, error = e.message ?: "Erreur réseau") }
+            _state.update { it.copy(loading = false, error = e.toUserMessage()) }
         }
     }
 }

@@ -1,0 +1,23 @@
+<main class="map-page">
+  <header class="map-header">
+    <div>
+      <p class="eyebrow">Live community activity</p>
+      <h1>Reports map</h1>
+    </div>
+    @if (!loading() && !errorMessage()) {
+      <span class="report-count">{{ reports().length }} report(s)</span>
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="map-loading" role="status">
+      <app-loading-spinner label="Loading reports map" />
+    </div>
+  } @else if (errorMessage()) {
+    <p class="map-error" role="alert">{{ errorMessage() }}</p>
+  } @else {
+    <div class="map-shell">
+      <div class="map" #map aria-label="Map showing reported community issues"></div>
+    </div>
+  }
+</main>

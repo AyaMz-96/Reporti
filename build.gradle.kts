@@ -24,6 +24,8 @@ repositories {
 dependencies {
 	// Spring Boot Web MVC : création des API REST
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
+	implementation("org.springframework.boot:spring-boot-starter-validation")
+	implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
 	// Connexion à la base de données
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")

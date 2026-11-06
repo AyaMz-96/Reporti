@@ -29,16 +29,47 @@ object ReportRepository {
 
     suspend fun createReport(request: CreateReportRequest): ReportResponse = api.createReport(request)
 
+    suspend fun getReports(): List<ReportResponse> = api.getReports()
+
+    suspend fun getNotifications(): List<NotificationDto> = api.getNotifications()
+
+    suspend fun markNotificationRead(id: Long) {
+        api.markRead(id)
+    }
+
+    suspend fun markAllNotificationsRead() {
+        api.markAllRead()
+    }
+
     suspend fun uploadMedia(
         contentResolver: ContentResolver,
         reportId: Long,
         uris: List<Uri>,
     ): List<String> = withContext(Dispatchers.IO) {
         val files = uris.mapIndexed { index, uri ->
-            val mimeType = contentResolver.getType(uri) ?: "application/octet-stream"
-            val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "bin"
-            val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                ?: throw UploadException("Could not read one of the selected files")
+            val rawType = contentResolver.getType(uri)
+            val mimeType = when {
+                rawType != null && (rawType.startsWith("image/") || rawType.startsWith("video/")) -> rawType
+                uri.toString().endsWith(".png", true) -> "image/png"
+                uri.toString().endsWith(".webp", true) -> "image/webp"
+                uri.toString().endsWith(".gif", true) -> "image/gif"
+                uri.toString().endsWith(".mp4", true) -> "video/mp4"
+                uri.toString().endsWith(".mov", true) -> "video/quicktime"
+                else -> "image/jpeg"
+            }
+            val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType)
+                ?: when {
+                    mimeType.startsWith("image/") -> "jpg"
+                    mimeType.startsWith("video/") -> "mp4"
+                    else -> "jpg"
+                }
+
+            val bytes = try {
+                contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            } catch (e: Exception) {
+                null
+            } ?: throw UploadException("Could not read one of the selected files")
+
             if (bytes.size > MAX_FILE_BYTES) {
                 throw UploadException("A selected file is larger than 10 MB")
             }
@@ -61,7 +92,7 @@ fun Throwable.toUserMessage(): String = when (this) {
     is HttpException -> readServerMessage() ?: "Request failed (${code()})"
     is UploadException -> message ?: "Could not prepare the files"
     is IOException -> "Cannot reach the server. Is the backend running?"
-    else -> "Something went wrong"
+    else -> message ?: "Something went wrong"
 }
 
 // The backend answers errors as {"message": "..."}

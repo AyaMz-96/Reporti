@@ -26,7 +26,9 @@
       }
 
       @if (loading()) {
-        <p class="empty">Loading...</p>
+        <div class="loading-state" role="status">
+          <app-loading-spinner label="Loading notifications" />
+        </div>
       } @else if (notifications().length === 0) {
         <p class="empty">No notifications yet.</p>
       } @else {

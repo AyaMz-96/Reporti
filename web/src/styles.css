@@ -1,1 +1,190 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --bg-cream: #F4EEDC;
+  --bg-nav: #E6E0CC;
+  --text-main: #1A1A1A;
+  --accent-red: #D63031;
+  --btn-pill-bg: #EAE4D2;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-solid: #FFFDF7;
+  --border: rgba(38, 34, 27, 0.12);
+  --muted: #696258;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-cream);
+  color: var(--text-main);
+}
+
+.dark-theme {
+  --bg-cream: #30312e;
+  --bg-nav: #41433e;
+  --text-main: #F7F4E8;
+  --accent-red: #FF767B;
+  --surface: rgba(66, 68, 63, 0.96);
+  --surface-solid: #464842;
+  --border: rgba(255, 255, 255, 0.16);
+  --muted: #C9CBC2;
+  color-scheme: dark;
+}
+
+.dark-theme body {
+  background-color: var(--bg-cream);
+  color: var(--text-main);
+}
+
+.dark-theme .nav-links {
+  background-color: rgba(69, 71, 66, 0.92);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark-theme .nav-links a {
+  color: #d8d1bf;
+}
+
+.dark-theme .nav-links a.active,
+.dark-theme .nav-links a:hover {
+  background-color: rgba(244, 238, 220, 0.16);
+  color: #fff;
+}
+
+.dark-theme input,
+.dark-theme select,
+.dark-theme textarea {
+  border-color: var(--border);
+  background: var(--surface-solid);
+  color: var(--text-main);
+}
+
+.dark-theme input::placeholder,
+.dark-theme textarea::placeholder {
+  color: #A4A69E;
+}
+
+.dark-theme .description,
+.dark-theme .report-card-body p,
+.dark-theme .section-heading p,
+.dark-theme .form-header > p:last-child,
+.dark-theme .brand p,
+.dark-theme .count {
+  color: var(--muted);
+}
+
+.dark-theme .report-card,
+.dark-theme .form-section,
+.dark-theme .filter-window,
+.dark-theme .language-menu,
+.dark-theme .login-modal,
+.dark-theme .reports-message,
+.dark-theme .reports-loading,
+.dark-theme .loading-state,
+.dark-theme .info-page {
+  border-color: var(--border);
+  background: var(--surface-solid);
+  color: var(--text-main);
+}
+
+.dark-theme .search-box,
+.dark-theme .page-button:not(.next),
+.dark-theme .carousel-actions button,
+.dark-theme .location-button,
+.dark-theme .file-drop,
+.dark-theme .close-button,
+.dark-theme .reset-button,
+.dark-theme .header-icon-btn,
+.dark-theme .login-btn {
+  border-color: var(--border);
+  background: #50524c;
+  color: var(--text-main);
+}
+
+.dark-theme li,
+.dark-theme .media-placeholder,
+.dark-theme .phone,
+.dark-theme .map-card,
+.dark-theme .phone-screen {
+  border-color: var(--border);
+}
+
+.dark-theme .media-placeholder,
+.dark-theme .map-card,
+.dark-theme .phone-screen,
+.dark-theme .reports-carousel,
+.dark-theme .filter-backdrop {
+  background-blend-mode: lighten;
+}
+
+.dark-theme .tag,
+.dark-theme .status,
+.dark-theme .files li,
+.dark-theme .nav-links {
+  border: 1px solid var(--border);
+  background: #50524c;
+  color: var(--text-main);
+}
+
+.dark-theme .meta,
+.dark-theme .report-meta,
+.dark-theme .count,
+.dark-theme .page-indicator,
+.dark-theme .filter-kicker,
+.dark-theme .modal-message,
+.dark-theme .file-drop small,
+.dark-theme .files li span,
+.dark-theme .footer-bottom {
+  color: var(--muted);
+}
+
+.dark-theme .footer {
+  background: #282925;
+  border: 1px solid var(--border);
+}
+
+.dark-theme .footer-bottom {
+  border-color: var(--border);
+}
+
+.hero-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 2rem 4rem;
+  gap: 2rem;
+}
+
+.hero-content h1 {
+  font-size: 3.5rem;
+  line-height: 1.1;
+  font-family: serif;
+  margin-bottom: 1.5rem;
+}
+
+.hero-content h1 .red-dot {
+  color: var(--accent-red);
+}
+
+.hero-content p {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 2rem;
+  max-width: 400px;
+}
+
+.submit-report-btn {
+  background-color: var(--accent-red);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.8rem;
+  border-radius: 25px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(214, 48, 49, 0.3);
+  cursor: pointer;
+}
+
+.hero-image-container img {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  border-radius: 12px;
+}

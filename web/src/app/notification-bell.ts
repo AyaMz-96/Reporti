@@ -4,6 +4,7 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { AppNotification, NotificationType } from './models';
 import { NotificationApi } from './notification-api';
 import { readError } from './report-api';
+import { LoadingSpinner } from './loading-spinner/loading-spinner';
 
 // How often the list is refreshed, so new notifications show up without reloading the page
 const REFRESH_INTERVAL_MS = 30000;
@@ -21,7 +22,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
 
 @Component({
   selector: 'app-notification-bell',
-  imports: [DatePipe],
+  imports: [DatePipe, LoadingSpinner],
   templateUrl: './notification-bell.html',
   styleUrl: './notification-bell.css',
 })
