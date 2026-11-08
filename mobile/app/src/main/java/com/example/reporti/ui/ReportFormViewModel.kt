@@ -15,6 +15,7 @@ import com.example.reporti.data.toUserMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import java.util.Locale
+import com.example.reporti.data.PriorityLevel
 
 class ReportFormViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -26,6 +27,8 @@ class ReportFormViewModel(application: Application) : AndroidViewModel(applicati
     var latitude by mutableStateOf("")
     var longitude by mutableStateOf("")
     var photos by mutableStateOf<List<Uri>>(emptyList())
+
+    var priority by mutableStateOf(PriorityLevel.NORMAL)
 
     // Loaded from the backend
     var categories by mutableStateOf<List<Category>>(emptyList())
@@ -117,6 +120,12 @@ class ReportFormViewModel(application: Application) : AndroidViewModel(applicati
         locationError = message
     }
 
+    fun onLocationPicked(lat: Double, lng: Double) {
+        latitude = String.format(Locale.US, "%.6f", lat)
+        longitude = String.format(Locale.US, "%.6f", lng)
+        locationError = null
+    }
+
     fun submit() {
         if (submitting) return
         errorMessage = null
@@ -146,6 +155,7 @@ class ReportFormViewModel(application: Application) : AndroidViewModel(applicati
                         longitude = longitude.replace(',', '.').toDouble(),
                         categoryId = categoryId!!,
                         sectorId = sectorId!!,
+                        priority = priority,
                     )
                 )
                 uploadAndFinish(report.id)
@@ -186,6 +196,7 @@ class ReportFormViewModel(application: Application) : AndroidViewModel(applicati
         pendingUploadId = null
         submitting = false
         successMessage = "Report #$reportId submitted. Thank you!"
+        priority = PriorityLevel.NORMAL
     }
 
     private fun coordinateError(text: String, limit: Int): String? {

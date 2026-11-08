@@ -88,7 +88,7 @@ fun NotificationsScreen(vm: NotificationViewModel) {
             }
         }
 
-        if (state.loading && state.items.isEmpty()) {
+        if (state.loading && state.all.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -97,7 +97,7 @@ fun NotificationsScreen(vm: NotificationViewModel) {
             ) {
                 CircularProgressIndicator()
             }
-        } else if (state.items.isEmpty() && state.error == null) {
+        } else if (state.visible.isEmpty() && state.error == null) {
             Text(
                 text = "Aucune notification",
                 color = Color.Gray,
@@ -109,7 +109,7 @@ fun NotificationsScreen(vm: NotificationViewModel) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(bottom = 120.dp)
         ) {
-            items(state.items, key = { it.id }) { notification ->
+            items(state.visible, key = { it.id }) { notification ->
                 NotificationCard(notification) {
                     if (!notification.isRead) vm.markRead(notification.id)
                 }
@@ -125,7 +125,6 @@ private fun NotificationCard(n: NotificationDto, onClick: () -> Unit) {
     } else {
         MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
     }
-    val typeStr = n.type ?: ""
 
     Card(
         modifier = Modifier
@@ -143,15 +142,15 @@ private fun NotificationCard(n: NotificationDto, onClick: () -> Unit) {
                 modifier = Modifier
                     .size(40.dp)
                     .background(
-                        color = notificationColor(typeStr).copy(alpha = 0.15f),
+                        color = notificationColor(n.type).copy(alpha = 0.15f),
                         shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(id = notificationIcon(typeStr)),
+                    painter = painterResource(id = notificationIcon(n.type)),
                     contentDescription = typeLabel(n.type),
-                    tint = notificationColor(typeStr),
+                    tint = notificationColor(n.type),
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -175,16 +174,16 @@ private fun NotificationCard(n: NotificationDto, onClick: () -> Unit) {
     }
 }
 
-private fun typeLabel(type: String?): String = when (type) {
+private fun typeLabel(type: String): String = when (type) {
     "STATUS_CHANGED" -> "Statut"
     "NEW_COMMENT" -> "Commentaire"
     "ASSIGNED" -> "Assignation"
-    "PRIORITY_URGENT", "URGENT_UPDATE" -> "Urgent"
+    "URGENT_UPDATE" -> "Urgent"
     "NEW_REPORT" -> "Nouveau signalement"
-    "DISPUTE" -> "Litige"
-    "AGENT_REFUSAL" -> "Refus agent"
+    "DISPUTE" -> "Contestation"
+    "AGENT_REFUSAL" -> "Refus de l'agent"
     "SYSTEM_ALERT" -> "Système"
-    else -> type ?: "Info"
+    else -> type
 }
 
 private fun formatDate(iso: String?): String =

@@ -57,15 +57,10 @@ fun MapScreen(
     val mapView = remember {
         MapView(context).apply {
             setTileSource(reportiTileSource())
-            setBackgroundColor(android.graphics.Color.rgb(231, 226, 208))
             setMultiTouchControls(true)
-            setUseDataConnection(true)
-            minZoomLevel = 3.0
-            maxZoomLevel = 19.0
-            isVerticalMapRepetitionEnabled = false
             controller.setZoom(6.0)
-            controller.setCenter(GeoPoint(36.8065, 10.1815))
-            // Tunis, matching the web map's default position
+            controller.setCenter(GeoPoint(33.9, 9.5))
+            // Centre of Tunisia, same start view as the web map
         }
     }
 
@@ -85,7 +80,7 @@ fun MapScreen(
         mapView.overlays.removeAll { it is Marker }
         val points = mutableListOf<GeoPoint>()
         for (report in state.reports) {
-            if (!isValidCoordinate(report.latitude, report.longitude)) continue
+            if (report.latitude == 0.0 && report.longitude == 0.0) continue
             val point = GeoPoint(report.latitude, report.longitude)
             points.add(point)
 
@@ -111,26 +106,12 @@ fun MapScreen(
                 mapView.controller.setCenter(points.first())
             }
             points.size > 1 -> mapView.zoomToBoundingBox(BoundingBox.fromGeoPoints(points), true, 80)
-            else -> {
-                mapView.controller.setZoom(10.0)
-                mapView.controller.setCenter(GeoPoint(36.8065, 10.1815))
-            }
         }
         mapView.invalidate()
     }
 
     Box(modifier.fillMaxSize()) {
-        AndroidView(
-            factory = { mapView },
-            update = {
-                it.post {
-                    it.onResume()
-                    it.requestLayout()
-                    it.invalidate()
-                }
-            },
-            modifier = Modifier.fillMaxSize(),
-        )
+        AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
 
         if (state.loading) {
             LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
@@ -229,10 +210,3 @@ private fun dot(fill: Int, stroke: Int, strokePx: Float, radiusPx: Float): Drawa
 
 private fun shortDate(iso: String?): String =
     iso?.take(10) ?: ""
-
-private fun isValidCoordinate(latitude: Double, longitude: Double): Boolean =
-    latitude.isFinite() &&
-        longitude.isFinite() &&
-        latitude in -90.0..90.0 &&
-        longitude in -180.0..180.0 &&
-        !(latitude == 0.0 && longitude == 0.0)

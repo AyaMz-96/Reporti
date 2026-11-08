@@ -2,8 +2,8 @@ package com.example.reporti.ui.map
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.reporti.data.ApiClient
 import com.example.reporti.data.Category
-import com.example.reporti.data.ReportRepository
 import com.example.reporti.data.ReportResponse
 import com.example.reporti.data.toUserMessage
 import kotlinx.coroutines.CancellationException
@@ -23,7 +23,7 @@ data class MapUiState(
 }
 
 class MapViewModel : ViewModel() {
-    private val repository = ReportRepository
+    private val api = ApiClient.api
     private val _state = MutableStateFlow(MapUiState())
     val state: StateFlow<MapUiState> = _state.asStateFlow()
 
@@ -33,8 +33,8 @@ class MapViewModel : ViewModel() {
         viewModelScope.launch {
             _state.update { it.copy(loading = true, error = null) }
             try {
-                val reports = repository.getReports()
-                val categories = repository.getCategories()
+                val reports = api.getReports()
+                val categories = api.getCategories()
                 _state.update { it.copy(reports = reports, categories = categories, loading = false) }
             } catch (e: CancellationException) {
                 throw e

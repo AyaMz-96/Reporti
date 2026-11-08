@@ -1,5 +1,7 @@
-import { Component, OnInit, signal } from '@angular/core';
+
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthApi } from '../auth/auth-api';
 
 import { NotificationBell } from '../notification-bell';
 
@@ -10,10 +12,15 @@ import { NotificationBell } from '../notification-bell';
   styleUrl: './header.css',
 })
 export class Header implements OnInit {
-  readonly loginOpen = signal(false);
+  protected readonly auth = inject(AuthApi);
+
   readonly languageOpen = signal(false);
   readonly darkMode = signal(false);
   readonly language = signal('EN');
+
+  protected logout(): void {
+    this.auth.logout();
+  }
 
   ngOnInit(): void {
     const savedTheme = localStorage.getItem('reporti-theme');
@@ -22,14 +29,6 @@ export class Header implements OnInit {
 
     this.darkMode.set(dark);
     document.documentElement.classList.toggle('dark-theme', dark);
-  }
-
-  openLogin(): void {
-    this.loginOpen.set(true);
-  }
-
-  closeLogin(): void {
-    this.loginOpen.set(false);
   }
 
   toggleLanguages(): void {

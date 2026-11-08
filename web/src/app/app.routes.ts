@@ -1,3 +1,4 @@
+
 import { Routes } from '@angular/router';
 
 import { Home } from './pages/home';
@@ -6,16 +7,39 @@ import { ReportForm } from './report-form';
 import { ReportList } from './report-list';
 import { MapPage } from './pages/map-page';
 
+
+
+import { authGuard } from './auth/auth-guard';
+import { LoginPage } from './pages/login-page';
+import { RegisterPage } from './pages/register-page';
+import { ForgotPasswordPage } from './pages/forgot-password-page';
+import { ResetPasswordPage } from './pages/reset-password-page';
+import { AccountPage } from './pages/account-page';
+
+
+
 export const routes: Routes = [
   { path: '', component: Home, title: 'Reporti' },
   { path: 'report', component: ReportForm, title: 'Submit a report' },
   { path: 'reports', component: ReportList, title: 'Reports' },
   { path: 'map', component: MapPage, title: 'Reports map' },
+
+
+
+  { path: 'login', component: LoginPage },
+  { path: 'register', component: RegisterPage },
+  { path: 'forgot-password', component: ForgotPasswordPage },
+  { path: 'reset-password', component: ResetPasswordPage },
+  { path: 'account', component: AccountPage, canActivate: [authGuard] },
+
   {
     path: 'contact',
     component: InfoPage,
     title: 'Contact',
-    data: { title: 'Contact', message: 'Contact page content will be added here.' },
+    data: {
+      title: 'Contact',
+      message: 'Contact page content will be added here.',
+    },
   },
   {
     path: 'about',
@@ -26,5 +50,7 @@ export const routes: Routes = [
       message: 'Reporti helps communities document and follow urban issues.',
     },
   },
+
+  // Wildcard route (must remain last)
   { path: '**', redirectTo: '', pathMatch: 'full' },
 ];
