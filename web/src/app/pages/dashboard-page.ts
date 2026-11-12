@@ -22,6 +22,8 @@ import { UsersApi } from '../users-api';
         </section>
         <section class="links">
           <a class="card link" routerLink="/admin/users">Manage users</a>
+          <a class="card link" routerLink="/admin/agents">Manage agents</a>
+          <a class="card link" routerLink="/admin/categories">Manage categories</a>
           <a class="card link" routerLink="/reports">All reports</a>
           <a class="card link" routerLink="/map">Reports map</a>
         </section>
