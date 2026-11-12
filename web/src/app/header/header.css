@@ -13,7 +13,6 @@
   height: 96px;
 }
 
-/* Sticky Container wrapper around navbar */
 .navbar {
   display: flex;
   align-items: center;
@@ -29,7 +28,6 @@
   -webkit-backdrop-filter: blur(18px) saturate(130%);
 }
 
-/* Logo styling */
 .logo-area {
   display: flex;
   align-items: center;
@@ -47,7 +45,6 @@
   object-position: center;
 }
 
-/* Center Pill Navigation Container */
 .nav-links {
   display: flex;
   align-items: center;
@@ -78,7 +75,64 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
-/* Right-side Action Items */
+/* Admin dropdown */
+.admin-dropdown-wrapper {
+  position: relative;
+}
+
+.nav-dropdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 9999px;
+  background: transparent;
+  border: none;
+  color: #4A453E;
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-dropdown-btn:hover {
+  color: var(--text-main);
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.admin-menu {
+  position: absolute;
+  top: calc(100% + 0.65rem);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 190px;
+  padding: 0.35rem;
+  border: 1px solid rgba(38, 34, 27, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 253, 247, 0.96);
+  box-shadow: 0 14px 35px rgba(50, 44, 33, 0.16);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+}
+
+.admin-menu a {
+  display: block;
+  padding: 0.55rem 0.75rem;
+  border-radius: 9px;
+  color: #1c1c1a;
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.admin-menu a:hover,
+.admin-menu a.active {
+  background: #eee8d9;
+}
+
+/* Right-side actions */
 .nav-actions {
   display: flex;
   align-items: center;
@@ -105,39 +159,6 @@
   background-color: rgba(216, 206, 186, 1);
 }
 
-:host-context(.dark-theme) .nav-links {
-  background-color: transparent;
-  border-color: transparent;
-}
-
-:host-context(.dark-theme) .nav-links a {
-  color: #C9CBBF;
-}
-
-:host-context(.dark-theme) .nav-links a:hover,
-:host-context(.dark-theme) .nav-links a.active {
-  background-color: rgba(255, 255, 255, 0.09);
-  color: #FFFFFF;
-}
-
-:host-context(.dark-theme) .login-btn,
-:host-context(.dark-theme) .header-icon-btn,
-:host-context(.dark-theme) .language-menu button:hover,
-:host-context(.dark-theme) .modal-close {
-  background-color: rgba(255, 255, 255, 0.08);
-  color: #F7F4E8;
-}
-
-:host-context(.dark-theme) .header-icon-btn {
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-:host-context(.dark-theme) .navbar {
-  background: rgba(70, 72, 66, 0.94);
-  border-color: rgba(255, 255, 255, 0.11);
-  box-shadow: 0 12px 38px rgba(20, 20, 18, 0.2);
-}
-
 .lang-btn {
   background-color: var(--accent-red);
   color: #ffffff;
@@ -150,7 +171,6 @@
   box-shadow: 0 2px 8px rgba(230, 57, 70, 0.3);
 }
 
-/* Icon Buttons (Search, Theme Toggle) */
 .icon-btn {
   background: transparent;
   border: none;
@@ -225,110 +245,84 @@
   font-weight: 800;
 }
 
-.login-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 3000;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: rgba(28, 25, 23, 0.28);
-  backdrop-filter: blur(8px);
+/* Dark mode */
+:host-context(.dark-theme) .nav-links {
+  background-color: transparent;
+  border-color: transparent;
 }
 
-.login-modal {
-  position: relative;
-  width: min(390px, calc(100vw - 2rem));
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 24px;
-  padding: 2rem;
-  background: #fffdf7;
-  box-shadow: 0 24px 70px rgba(40, 35, 27, 0.25);
-  text-align: center;
+:host-context(.dark-theme) .nav-links a {
+  color: #C9CBBF;
 }
 
-.modal-close {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  width: 34px;
-  height: 34px;
-  border: 0;
-  border-radius: 50%;
-  background: #eee8d9;
-  color: var(--text-main);
-  font-size: 1.25rem;
-  cursor: pointer;
+:host-context(.dark-theme) .nav-links a:hover,
+:host-context(.dark-theme) .nav-links a.active {
+  background-color: rgba(255, 255, 255, 0.09);
+  color: #FFFFFF;
 }
 
-.modal-icon {
-  display: grid;
-  width: 68px;
-  height: 68px;
-  margin: 0 auto 1rem;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--accent-red);
-  color: white;
-  font-family: Georgia, serif;
-  font-size: 2rem;
-  font-weight: 800;
+:host-context(.dark-theme) .nav-dropdown-btn {
+  color: #C9CBBF;
 }
 
-.modal-kicker {
-  margin: 0;
-  color: var(--accent-red);
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
+:host-context(.dark-theme) .nav-dropdown-btn:hover {
+  background-color: rgba(255, 255, 255, 0.09);
+  color: #FFFFFF;
 }
 
-.login-modal h2 {
-  margin: 0.45rem 0;
-  font-family: Georgia, serif;
-  font-size: 2rem;
+:host-context(.dark-theme) .admin-menu {
+  background: rgba(37, 39, 36, 0.98);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
-.modal-message {
-  margin: 0 0 1.25rem;
-  color: #777064;
+:host-context(.dark-theme) .admin-menu a {
+  color: #F7F4E8;
 }
 
-.modal-action {
-  width: 100%;
-  height: 46px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--accent-red);
-  color: white;
-  font-weight: 800;
-  cursor: pointer;
+:host-context(.dark-theme) .admin-menu a:hover,
+:host-context(.dark-theme) .admin-menu a.active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+:host-context(.dark-theme) .login-btn,
+:host-context(.dark-theme) .header-icon-btn,
+:host-context(.dark-theme) .language-menu button:hover,
+:host-context(.dark-theme) .modal-close {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #F7F4E8;
+}
+
+:host-context(.dark-theme) .header-icon-btn {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+:host-context(.dark-theme) .navbar {
+  background: rgba(70, 72, 66, 0.94);
+  border-color: rgba(255, 255, 255, 0.11);
+  box-shadow: 0 12px 38px rgba(20, 20, 18, 0.2);
 }
 
 @media (max-width: 900px) {
   :host {
     height: 132px;
   }
-
   .navbar {
     flex-wrap: wrap;
     margin: 0.65rem;
     padding: 0.55rem 0.75rem;
     border-radius: 24px;
   }
-
   .nav-links {
     order: 3;
     width: 100%;
     overflow-x: auto;
     scrollbar-width: none;
   }
-
   .nav-links::-webkit-scrollbar {
     display: none;
   }
-
-  .nav-links a {
+  .nav-links a,
+  .nav-dropdown-btn {
     flex: 0 0 auto;
     padding-inline: 0.8rem;
   }

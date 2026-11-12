@@ -20,29 +20,21 @@ import { UsersApi } from '../users-api';
           <div class="card stat"><strong>{{ agents() }}</strong><span>Agents</span></div>
           <div class="card stat"><strong>{{ suspended() }}</strong><span>Suspended</span></div>
         </section>
-        <section class="links">
-          <a class="card link" routerLink="/admin/users">Manage users</a>
-          <a class="card link" routerLink="/admin/agents">Manage agents</a>
-          <a class="card link" routerLink="/admin/categories">Manage categories</a>
-          <a class="card link" routerLink="/agent/assignments">Assign Reports</a>
-          <a class="card link" routerLink="/reports">All reports</a>
-          <a class="card link" routerLink="/map">Reports map</a>
-        </section>
 
-        <a class="card link" routerLink="/account">My profile</a>
+        <p class="muted" style="margin-top: 0.5rem;">
+          Use the <strong>Admin ▾</strong> menu in the top navigation to manage users, agents, categories and assignments.
+        </p>
       }
     </main>
   `,
   styles: [`
-    .wrap { max-width: 900px; margin: 2rem auto; padding: 0 1rem; display: grid; gap: 1.25rem; color: #1c1c1a; }
-    .card { background: #fffdf8; border-radius: 20px; padding: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
-    h1, h2 { margin: 0 0 .5rem; }
-    .muted { color: #6b6b66; margin: 0; }
-    .stats, .links { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    .wrap { max-width: 900px; margin: 2rem auto; padding: 0 1rem; display: grid; gap: 1.25rem; color: var(--text-main); }
+    .card { background: var(--surface-solid); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+    h1 { margin: 0 0 .5rem; }
+    .muted { color: var(--muted); margin: 0; }
+    .stats { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
     .stat { display: grid; gap: .25rem; text-align: center; }
-    .stat strong { font-size: 2rem; color: #d92f2f; }
-    .link { text-decoration: none; color: inherit; font-weight: 700; text-align: center; }
-    .link:hover { background: #fff; }
+    .stat strong { font-size: 2rem; color: var(--accent-red); }
   `],
 })
 export class DashboardPage implements OnInit {

@@ -1,4 +1,3 @@
-
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthApi } from '../auth/auth-api';
@@ -17,6 +16,7 @@ export class Header implements OnInit {
   readonly languageOpen = signal(false);
   readonly darkMode = signal(false);
   readonly language = signal('EN');
+  readonly adminMenuOpen = signal(false);
 
   protected logout(): void {
     this.auth.logout();
@@ -47,5 +47,13 @@ export class Header implements OnInit {
       localStorage.setItem('reporti-theme', next ? 'dark' : 'light');
       return next;
     });
+  }
+
+  toggleAdminMenu(): void {
+    this.adminMenuOpen.update((v) => !v);
+  }
+
+  closeAdminMenu(): void {
+    this.adminMenuOpen.set(false);
   }
 }
