@@ -11,10 +11,12 @@ export function readError(error: unknown): string {
     if (error.status === 0) {
       return 'Cannot reach the server. Is the backend running?';
     }
-    // The backend answers errors as {"message": "..."}
     const message = error.error?.message;
     if (typeof message === 'string' && message.length > 0) {
       return message;
+    }
+    if (error.status === 500) {
+      return 'Server error (500). Check the backend console for the full stack trace.';
     }
     return `Request failed (${error.status})`;
   }
@@ -24,8 +26,6 @@ export function readError(error: unknown): string {
 @Injectable({ providedIn: 'root' })
 export class ReportApi {
   private readonly http = inject(HttpClient);
-
-  // TEMPORARY: the backend identifies the citizen from this header until real authentication exists
   private readonly citizenHeaders = new HttpHeaders({ 'X-Citizen-Id': String(CITIZEN_ID) });
 
   getCategories(): Observable<Category[]> {
@@ -37,18 +37,12 @@ export class ReportApi {
   }
 
   createReport(request: CreateReportRequest): Observable<ReportResponse> {
-    return this.http.post<ReportResponse>(`${API_BASE_URL}/reports`, request, {
-      headers: this.citizenHeaders,
-    });
+    return this.http.post<ReportResponse>(`${API_BASE_URL}/reports`, request, { headers: this.citizenHeaders });
   }
 
   uploadMedia(reportId: number, files: File[]): Observable<string[]> {
     const body = new FormData();
-    // Same field name as @RequestParam("files") on the backend; repeated once per file
     files.forEach((file) => body.append('files', file));
-    // No Content-Type header on purpose: the browser must set it itself to include the multipart boundary
-    return this.http.post<string[]>(`${API_BASE_URL}/reports/${reportId}/media`, body, {
-      headers: this.citizenHeaders,
-    });
+    return this.http.post<string[]>(`${API_BASE_URL}/reports/${reportId}/media`, body, { headers: this.citizenHeaders });
   }
 }

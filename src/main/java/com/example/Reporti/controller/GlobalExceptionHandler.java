@@ -1,5 +1,7 @@
 package com.example.Reporti.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,9 +13,10 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/** Makes every error look like {"message": "..."} so both frontends can show it directly. */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException e) {
@@ -31,8 +34,27 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, String>> handleIntegrity(DataIntegrityViolationException e) {
-        // Most likely cause right now: the X-Citizen-Id user does not exist in the users table
+        // Log the real cause so you can see the exact SQL error in the backend console
+        log.error("Data integrity violation", e);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("message", "Invalid reference (does the citizen user exist?)"));
+                .body(Map.of("message",
+                    "Database constraint failed: " + rootMessage(e) +
+                    " — check the backend console for details."));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleUncaught(Exception e) {
+        // Anything else: log it fully so the backend console shows the real issue
+        log.error("Unhandled exception", e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message",
+                    "Server error: " + e.getClass().getSimpleName() +
+                    (e.getMessage() != null ? " — " + e.getMessage() : "")));
+    }
+
+    private String rootMessage(Throwable t) {
+        Throwable cur = t;
+        while (cur.getCause() != null && cur.getCause() != cur) cur = cur.getCause();
+        return cur.getMessage() == null ? t.getClass().getSimpleName() : cur.getMessage();
     }
 }

@@ -50,7 +50,6 @@ public class ReportService {
         if (!sectorRepository.existsById(request.sectorId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown sector");
         }
-
         Report report = new Report();
         report.setTitle(request.title().trim());
         report.setDescription(request.description().trim());
@@ -59,18 +58,76 @@ public class ReportService {
         report.setCategoryId(request.categoryId());
         report.setSectorId(request.sectorId());
         report.setCitizenId(citizenId);
-
         Report saved = reportRepository.save(report);
         return ReportResponse.from(saved, List.of());
     }
 
+    /** Legacy admin-style assignment: admin picks any agent from the available list. */
     @Transactional
     public ReportResponse assignReport(Long reportId, String agentId) {
         Report report = findReport(reportId);
-        report.setAgentId(agentId);
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(agentId.trim());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "agentId must be a valid UUID (got: " + agentId + ")");
+        }
+        report.setAgentId(uuid);
         report.setStatus(ReportStatus.IN_PROGRESS);
-        Report saved = reportRepository.save(report);
-        return ReportResponse.from(saved, mediaRepository.findByReportId(reportId));
+        return ReportResponse.from(reportRepository.save(report), mediaRepository.findByReportId(reportId));
+    }
+
+    /** Reports a given agent can take up right now: RECEIVED, unassigned, matching their profile. */
+    @Transactional(readOnly = true)
+    public List<ReportResponse> listClaimableForAgent(List<Integer> categoryIds, Integer sectorId) {
+        if ((categoryIds == null || categoryIds.isEmpty()) && sectorId == null) {
+            return List.of();
+        }
+        return reportRepository.findByArchivedFalseOrderByCreatedAtDesc().stream()
+            .filter(r -> r.getStatus() == ReportStatus.RECEIVED && r.getAgentId() == null)
+            .filter(r -> categoryIds == null || categoryIds.isEmpty()
+                    || categoryIds.contains(r.getCategoryId().intValue()))
+            .filter(r -> sectorId == null || r.getSectorId().equals(sectorId.longValue()))
+            .map(r -> ReportResponse.from(r, mediaRepository.findByReportId(r.getId())))
+            .toList();
+    }
+
+    /** Reports already assigned to this specific agent. */
+    @Transactional(readOnly = true)
+    public List<ReportResponse> listActiveForAgent(String agentId) {
+        return reportRepository.findByArchivedFalseOrderByCreatedAtDesc().stream()
+            .filter(r -> r.getAgentId() != null && r.getAgentId().toString().equals(agentId))
+            .map(r -> ReportResponse.from(r, mediaRepository.findByReportId(r.getId())))
+            .toList();
+    }
+
+    /** Claim a report for the calling agent, with full fit revalidation on the server. */
+    @Transactional
+    public ReportResponse claimReport(Long reportId, String agentId, List<Integer> categoryIds, Integer sectorId) {
+        Report report = findReport(reportId);
+        if (report.getStatus() != ReportStatus.RECEIVED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This report is no longer available");
+        }
+        if (report.getAgentId() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Already assigned to another agent");
+        }
+        if ((categoryIds == null || categoryIds.isEmpty()) && sectorId == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                "Configure at least one category or sector in your profile before taking assignments");
+        }
+        if (categoryIds != null && !categoryIds.isEmpty()
+                && !categoryIds.contains(report.getCategoryId().intValue())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                "This report's category is not in your profile");
+        }
+        if (sectorId != null && !report.getSectorId().equals(sectorId.longValue())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                "This report is outside your sector");
+        }
+        report.setAgentId(UUID.fromString(agentId));
+        report.setStatus(ReportStatus.IN_PROGRESS);
+        return ReportResponse.from(reportRepository.save(report), mediaRepository.findByReportId(reportId));
     }
 
     @Transactional(readOnly = true)
@@ -90,32 +147,21 @@ public class ReportService {
         if (!report.getCitizenId().equals(citizenId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This report belongs to another citizen");
         }
-
         List<String> urls = new ArrayList<>();
         for (MultipartFile file : files) {
-            if (file.isEmpty()) {
-                continue;
-            }
+            if (file.isEmpty()) continue;
             String contentType = file.getContentType() == null ? "" : file.getContentType();
             MediaKind kind;
-            if (contentType.startsWith("image/")) {
-                kind = MediaKind.PHOTO;
-            } else if (contentType.startsWith("video/")) {
-                kind = MediaKind.VIDEO;
-            } else {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only photos and videos are accepted");
-            }
+            if (contentType.startsWith("image/")) kind = MediaKind.PHOTO;
+            else if (contentType.startsWith("video/")) kind = MediaKind.VIDEO;
+            else throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only photos and videos are accepted");
 
             byte[] bytes;
-            try {
-                bytes = file.getBytes();
-            } catch (IOException e) {
+            try { bytes = file.getBytes(); } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Could not read the uploaded file");
             }
-
             String path = "reports/" + reportId + "/" + UUID.randomUUID() + "." + extensionOf(file.getOriginalFilename());
             String url = storage.upload(path, bytes, contentType);
-
             Media media = new Media();
             media.setReportId(reportId);
             media.setType(kind);
@@ -132,13 +178,9 @@ public class ReportService {
     }
 
     private String extensionOf(String filename) {
-        if (filename == null) {
-            return "bin";
-        }
+        if (filename == null) return "bin";
         int dot = filename.lastIndexOf('.');
-        if (dot < 0 || dot == filename.length() - 1) {
-            return "bin";
-        }
+        if (dot < 0 || dot == filename.length() - 1) return "bin";
         String ext = filename.substring(dot + 1).toLowerCase();
         return ext.matches("[a-z0-9]{1,5}") ? ext : "bin";
     }

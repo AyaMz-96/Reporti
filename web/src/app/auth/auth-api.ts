@@ -14,6 +14,8 @@ export interface AuthUser {
   email: string;
   phone: string | null;
   role: Role;
+  categoryIds: number[];
+  sectorId: number | null;
 }
 
 export function errorMessage(err: unknown): string {
@@ -21,11 +23,31 @@ export function errorMessage(err: unknown): string {
   return msg ? msg : 'Something went wrong. Please try again.';
 }
 
+function parseCategoryIds(meta: Record<string, unknown> | undefined): number[] {
+  if (!meta) return [];
+  const raw = meta['categoryIds'];
+  if (Array.isArray(raw)) {
+    return raw.map((v) => Number(v)).filter((n) => Number.isFinite(n));
+  }
+  const single = meta['categoryId'];
+  if (single != null) {
+    const n = Number(single);
+    return Number.isFinite(n) ? [n] : [];
+  }
+  return [];
+}
+
+function parseSectorId(meta: Record<string, unknown> | undefined): number | null {
+  if (!meta) return null;
+  const v = meta['sectorId'];
+  if (v == null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthApi {
   private readonly session = signal<Session | null>(null);
-
-  /** Se resout quand la session sauvegardee a ete lue (utile pour le guard). */
   readonly ready: Promise<void>;
 
   readonly token = computed(() => this.session()?.access_token ?? null);
@@ -38,12 +60,15 @@ export class AuthApi {
       rawRole === 'admin' || rawRole === 'agent' || rawRole === 'sector_manager'
         ? rawRole
         : 'citizen';
+    const meta = (u.user_metadata ?? {}) as Record<string, unknown>;
     return {
       id: u.id,
-      fullName: (u.user_metadata?.['full_name'] as string) ?? u.email ?? '',
+      fullName: (meta['full_name'] as string) ?? u.email ?? '',
       email: u.email ?? '',
-      phone: (u.user_metadata?.['phone'] as string) ?? null,
+      phone: (meta['phone'] as string) ?? null,
       role,
+      categoryIds: parseCategoryIds(meta),
+      sectorId: parseSectorId(meta),
     };
   });
   readonly isAdmin = computed(() => this.user()?.role === 'admin');

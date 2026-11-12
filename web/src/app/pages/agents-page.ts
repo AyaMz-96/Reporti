@@ -2,8 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { AdminUser, UsersApi } from '../users-api';
-import { readError } from '../report-api';
-import { ReportApi } from '../report-api';
+import { readError, ReportApi } from '../report-api';
 import { AuthApi } from '../auth/auth-api';
 import { Category, Sector } from '../models';
 
@@ -36,21 +35,32 @@ import { Category, Sector } from '../models';
               <label>Password <input name="password" type="password" [(ngModel)]="form.password" /></label>
             }
             <label>Phone <input name="phone" [(ngModel)]="form.phone" /></label>
-            <label>Category
-              <select name="categoryId" [(ngModel)]="form.categoryId">
-                <option [ngValue]="null">— Any —</option>
-                @for (c of categories(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
-              </select>
-            </label>
+
             <label>Sector
               <select name="sectorId" [(ngModel)]="form.sectorId">
                 <option [ngValue]="null">— Any —</option>
-                @for (s of sectors(); track s.id) { <option [ngValue]="s.id">{{ s.name }}{{ s.zone ? ' (' + s.zone + ')' : '' }}</option> }
+                @for (s of sectors(); track s.id) {
+                  <option [ngValue]="s.id">{{ s.name }}{{ s.zone ? ' (' + s.zone + ')' : '' }}</option>
+                }
               </select>
             </label>
+
+            <div class="checkbox-group">
+              <span class="group-label">Categories (select all that apply)</span>
+              @for (c of categories(); track c.id) {
+                <label class="checkbox-row">
+                  <input type="checkbox" [checked]="form.categoryIds.includes(c.id)"
+                         (change)="toggleCategory(c.id)" />
+                  {{ c.name }}
+                </label>
+              } @empty {
+                <span class="muted">No categories created yet.</span>
+              }
+            </div>
+
             <div class="actions">
               <button type="submit" class="primary" [disabled]="saving()">Save</button>
-              <button type="button" (click)="closeForm()">Cancel</button>
+              <button type="button" class="action-btn" (click)="closeForm()">Cancel</button>
             </div>
           </form>
         </section>
@@ -61,23 +71,24 @@ import { Category, Sector } from '../models';
           <p class="muted">Loading…</p>
         } @else {
           <table>
-            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Category / Sector</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Categories</th><th>Sector</th><th>Status</th><th></th></tr></thead>
             <tbody>
               @for (u of filtered(); track u.id) {
                 <tr>
                   <td>{{ u.fullName || '—' }}</td>
                   <td>{{ u.email }}</td>
                   <td>{{ u.phone || '—' }}</td>
-                  <td>{{ categoryName(u.categoryId) }} / {{ sectorName(u.sectorId) }}</td>
+                  <td>{{ categoryNames(u.categoryIds) }}</td>
+                  <td>{{ sectorName(u.sectorId) }}</td>
                   <td><span class="badge" [class.off]="u.suspended">{{ u.suspended ? 'suspended' : 'active' }}</span></td>
                   <td class="row-actions">
-                    <button type="button" (click)="openEdit(u)">Edit</button>
-                    <button type="button" [disabled]="isMe(u)" (click)="toggleSuspend(u)">{{ u.suspended ? 'Activate' : 'Suspend' }}</button>
-                    <button type="button" class="danger" [disabled]="isMe(u)" (click)="remove(u)">Delete</button>
+                    <button type="button" class="action-btn" (click)="openEdit(u)">Edit</button>
+                    <button type="button" class="action-btn" [disabled]="isMe(u)" (click)="toggleSuspend(u)">{{ u.suspended ? 'Activate' : 'Suspend' }}</button>
+                    <button type="button" class="action-btn danger" [disabled]="isMe(u)" (click)="remove(u)">Delete</button>
                   </td>
                 </tr>
               } @empty {
-                <tr><td colspan="6" class="muted">No agents found.</td></tr>
+                <tr><td colspan="7" class="muted">No agents found.</td></tr>
               }
             </tbody>
           </table>
@@ -86,7 +97,8 @@ import { Category, Sector } from '../models';
     </main>
   `,
   styles: [`
-    .wrap { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; display: grid; gap: 1.25rem; color: var(--text-main); }
+    :host { display: block; color: var(--text-main); }
+    .wrap { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; display: grid; gap: 1.25rem; }
     .top { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
     h1, h2 { margin: 0; color: var(--text-main); }
     .muted { color: var(--muted); margin: .25rem 0 0; }
@@ -97,8 +109,12 @@ import { Category, Sector } from '../models';
     .form { display: grid; gap: .9rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 1rem; }
     label { display: grid; gap: .35rem; font-weight: 600; color: var(--text-main); }
     input, select { padding: .65rem .85rem; border: 1px solid var(--border); border-radius: 12px; font: inherit; background: var(--surface-solid); color: var(--text-main); }
-    .actions { display: flex; gap: .75rem; align-items: end; }
-    button { padding: .55rem 1rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-solid); color: var(--text-main); font-weight: 600; cursor: pointer; }
+    .checkbox-group { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; padding: .75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+    .group-label { width: 100%; font-weight: 600; font-size: .85rem; color: var(--muted); }
+    .checkbox-row { display: flex; align-items: center; gap: .35rem; font-weight: 500; }
+    .checkbox-row input { width: auto; }
+    .actions { display: flex; gap: .75rem; align-items: end; grid-column: 1 / -1; }
+    button { padding: .55rem 1rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-solid); color: var(--text-main); font-weight: 600; cursor: pointer; font: inherit; }
     button:disabled { opacity: .45; cursor: default; }
     .primary { background: var(--accent-red); color: #fff; border-color: var(--accent-red); }
     .danger { color: var(--accent-red); border-color: var(--accent-red); }
@@ -110,6 +126,14 @@ import { Category, Sector } from '../models';
     .badge.off { background: rgba(214, 48, 49, 0.15); color: var(--accent-red); border-color: var(--accent-red); }
     .err { color: var(--accent-red); margin: 0; }
     .ok { color: #22c55e; margin: 0; }
+
+    :host-context(.dark-theme) .action-btn {
+      background: #50524c !important;
+      color: #F7F4E8 !important;
+      border-color: rgba(255,255,255,0.18) !important;
+    }
+    :host-context(.dark-theme) .action-btn.danger { color: #FF767B !important; border-color: #FF767B !important; }
+    :host-context(.dark-theme) .primary { background: #FF767B !important; color: #1a1a1a !important; }
   `]
 })
 export class AgentsPage implements OnInit {
@@ -128,7 +152,7 @@ export class AgentsPage implements OnInit {
   protected readonly categories = signal<Category[]>([]);
   protected readonly sectors = signal<Sector[]>([]);
 
-  protected form = { fullName: '', email: '', phone: '', password: '', categoryId: null as number | null, sectorId: null as number | null };
+  protected form = { fullName: '', email: '', phone: '', password: '', categoryIds: [] as number[], sectorId: null as number | null };
 
   protected readonly filtered = computed(() => {
     const q = this.query().trim().toLowerCase();
@@ -143,9 +167,9 @@ export class AgentsPage implements OnInit {
     this.reportApi.getSectors().subscribe((s) => this.sectors.set(s));
   }
 
-  protected categoryName(id: number | null): string {
-    if (id == null) return 'Any';
-    return this.categories().find((c) => c.id === id)?.name ?? `#${id}`;
+  protected categoryNames(ids: number[]): string {
+    if (!ids || ids.length === 0) return '—';
+    return ids.map((id) => this.categories().find((c) => c.id === id)?.name ?? `#${id}`).join(', ');
   }
 
   protected sectorName(id: number | null): string {
@@ -155,16 +179,22 @@ export class AgentsPage implements OnInit {
 
   protected isMe(u: AdminUser): boolean { return u.id === this.auth.user()?.id; }
 
+  protected toggleCategory(id: number): void {
+    const set = new Set(this.form.categoryIds);
+    if (set.has(id)) set.delete(id); else set.add(id);
+    this.form = { ...this.form, categoryIds: Array.from(set) };
+  }
+
   protected openCreate(): void {
     this.editingId.set(null);
-    this.form = { fullName: '', email: '', phone: '', password: '', categoryId: null, sectorId: null };
+    this.form = { fullName: '', email: '', phone: '', password: '', categoryIds: [], sectorId: null };
     this.error.set('');
     this.formOpen.set(true);
   }
 
   protected openEdit(u: AdminUser): void {
     this.editingId.set(u.id);
-    this.form = { fullName: u.fullName, email: u.email, phone: u.phone ?? '', password: '', categoryId: u.categoryId, sectorId: u.sectorId };
+    this.form = { fullName: u.fullName, email: u.email, phone: u.phone ?? '', password: '', categoryIds: [...u.categoryIds], sectorId: u.sectorId };
     this.error.set('');
     this.formOpen.set(true);
   }
@@ -182,14 +212,14 @@ export class AgentsPage implements OnInit {
 
     this.saving.set(true);
     const request = id
-      ? this.api.update(id, { fullName: f.fullName.trim(), phone: f.phone.trim(), categoryId: f.categoryId, sectorId: f.sectorId })
+      ? this.api.update(id, { fullName: f.fullName.trim(), phone: f.phone.trim(), categoryIds: f.categoryIds, sectorId: f.sectorId })
       : this.api.create({
           email: f.email.trim(),
           password: f.password,
           fullName: f.fullName.trim(),
           phone: f.phone.trim() || null,
           role: 'agent',
-          categoryId: f.categoryId,
+          categoryIds: f.categoryIds,
           sectorId: f.sectorId,
         });
 

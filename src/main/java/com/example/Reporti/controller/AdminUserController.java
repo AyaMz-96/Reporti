@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/admin/users")
 public class AdminUserController {
@@ -21,10 +23,16 @@ public class AdminUserController {
             @NotBlank String fullName,
             String phone,
             String role,
-            Integer categoryId,
+            List<Integer> categoryIds,
             Integer sectorId) {}
 
-    public record UpdateUserRequest(String fullName, String phone, String role, Boolean suspended, Integer categoryId, Integer sectorId) {}
+    public record UpdateUserRequest(
+            String fullName,
+            String phone,
+            String role,
+            Boolean suspended,
+            List<Integer> categoryIds,
+            Integer sectorId) {}
 
     private final AdminUserService service;
 
@@ -43,7 +51,7 @@ public class AdminUserController {
             @RequestHeader(value = "Authorization", required = false) String auth,
             @Valid @RequestBody CreateUserRequest r) {
         service.requireAdmin(auth);
-        return json(service.create(r.email(), r.password(), r.fullName(), r.phone(), r.role(), r.categoryId(), r.sectorId()));
+        return json(service.create(r.email(), r.password(), r.fullName(), r.phone(), r.role(), r.categoryIds(), r.sectorId()));
     }
 
     @PutMapping("/{id}")
@@ -60,7 +68,7 @@ public class AdminUserController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot remove your own admin role");
             }
         }
-        return json(service.update(id, r.fullName(), r.phone(), r.role(), r.suspended(), r.categoryId(), r.sectorId()));
+        return json(service.update(id, r.fullName(), r.phone(), r.role(), r.suspended(), r.categoryIds(), r.sectorId()));
     }
 
     @DeleteMapping("/{id}")

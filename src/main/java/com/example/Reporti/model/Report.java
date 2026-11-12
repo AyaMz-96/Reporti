@@ -14,6 +14,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "reports")
@@ -62,8 +63,9 @@ public class Report {
     @Column(name = "citizen_id", nullable = false)
     private Long citizenId;
 
-    @Column(name = "agent_id")
-    private String agentId;
+    /** UUID of the agent assigned to this report (from Supabase Auth). Stored as native uuid. */
+    @Column(name = "agent_id", columnDefinition = "uuid")
+    private UUID agentId;
 
     @PrePersist
     void onCreate() {
@@ -73,9 +75,7 @@ public class Report {
     }
 
     @PreUpdate
-    void onUpdate() {
-        updatedAt = OffsetDateTime.now();
-    }
+    void onUpdate() { updatedAt = OffsetDateTime.now(); }
 
     public Long getId() { return id; }
     public String getTitle() { return title; }
@@ -100,6 +100,6 @@ public class Report {
     public void setSectorId(Long sectorId) { this.sectorId = sectorId; }
     public Long getCitizenId() { return citizenId; }
     public void setCitizenId(Long citizenId) { this.citizenId = citizenId; }
-    public String getAgentId() { return agentId; }
-    public void setAgentId(String agentId) { this.agentId = agentId; }
+    public UUID getAgentId() { return agentId; }
+    public void setAgentId(UUID agentId) { this.agentId = agentId; }
 }

@@ -13,7 +13,7 @@ export interface AdminUser {
   role: Role;
   suspended: boolean;
   createdAt: string;
-  categoryId: number | null;
+  categoryIds: number[];
   sectorId: number | null;
 }
 
@@ -23,7 +23,7 @@ export interface CreateUserBody {
   fullName: string;
   phone: string | null;
   role: Role;
-  categoryId?: number | null;
+  categoryIds?: number[];
   sectorId?: number | null;
 }
 
@@ -32,7 +32,7 @@ export interface UpdateUserBody {
   phone?: string;
   role?: Role;
   suspended?: boolean;
-  categoryId?: number | null;
+  categoryIds?: number[];
   sectorId?: number | null;
 }
 
@@ -44,16 +44,27 @@ interface RawUser {
   user_metadata?: {
     full_name?: string;
     phone?: string | null;
+    categoryIds?: Array<number | string> | null;
     categoryId?: number | string | null;
     sectorId?: number | string | null;
   };
   app_metadata?: { role?: string };
 }
 
-function toNumOrNull(v: number | string | null | undefined): number | null {
-  if (v === null || v === undefined) return null;
+function num(v: unknown): number | null {
+  if (v == null) return null;
   const n = typeof v === 'number' ? v : Number(v);
   return Number.isFinite(n) ? n : null;
+}
+
+function parseCategoryIds(meta: RawUser['user_metadata']): number[] {
+  if (!meta) return [];
+  const raw = meta.categoryIds;
+  if (Array.isArray(raw)) {
+    return raw.map(num).filter((n): n is number => n !== null);
+  }
+  const single = num(meta.categoryId);
+  return single !== null ? [single] : [];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -69,9 +80,7 @@ export class UsersApi {
   list(): Observable<AdminUser[]> {
     return this.http
       .get<{ users: RawUser[] }>(this.url, { headers: this.headers() })
-      .pipe(
-        map((r) => r.users.map((u) => this.toUser(u)).sort((a, b) => b.createdAt.localeCompare(a.createdAt))),
-      );
+      .pipe(map((r) => r.users.map((u) => this.toUser(u)).sort((a, b) => b.createdAt.localeCompare(a.createdAt))));
   }
 
   create(body: CreateUserBody): Observable<unknown> {
@@ -96,8 +105,8 @@ export class UsersApi {
       role: role === 'admin' || role === 'agent' || role === 'sector_manager' ? role : 'citizen',
       suspended: !!u.banned_until && new Date(u.banned_until) > new Date(),
       createdAt: u.created_at ?? '',
-      categoryId: toNumOrNull(u.user_metadata?.categoryId),
-      sectorId: toNumOrNull(u.user_metadata?.sectorId),
+      categoryIds: parseCategoryIds(u.user_metadata),
+      sectorId: num(u.user_metadata?.sectorId),
     };
   }
 }
