@@ -1,4 +1,3 @@
-
 import { Routes } from '@angular/router';
 
 import { Home } from './pages/home';
@@ -7,16 +6,15 @@ import { ReportForm } from './report-form';
 import { ReportList } from './report-list';
 import { MapPage } from './pages/map-page';
 
-
-
 import { authGuard } from './auth/auth-guard';
+import { adminGuard } from './auth/role-guard';
 import { LoginPage } from './pages/login-page';
 import { RegisterPage } from './pages/register-page';
 import { ForgotPasswordPage } from './pages/forgot-password-page';
 import { ResetPasswordPage } from './pages/reset-password-page';
 import { AccountPage } from './pages/account-page';
-
-
+import { UsersPage } from './pages/users-page';
+import { DashboardPage } from './pages/dashboard-page';
 
 export const routes: Routes = [
   { path: '', component: Home, title: 'Reporti' },
@@ -24,13 +22,13 @@ export const routes: Routes = [
   { path: 'reports', component: ReportList, title: 'Reports' },
   { path: 'map', component: MapPage, title: 'Reports map' },
 
-
-
   { path: 'login', component: LoginPage },
   { path: 'register', component: RegisterPage },
   { path: 'forgot-password', component: ForgotPasswordPage },
   { path: 'reset-password', component: ResetPasswordPage },
   { path: 'account', component: AccountPage, canActivate: [authGuard] },
+  { path: 'dashboard', component: DashboardPage, title: 'Dashboard', canActivate: [adminGuard] },
+  { path: 'admin/users', component: UsersPage, title: 'Users', canActivate: [adminGuard] },
 
   {
     path: 'contact',

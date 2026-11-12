@@ -6,11 +6,14 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL } from '../supabase-config';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+export type Role = 'citizen' | 'agent' | 'sector_manager' | 'admin';
+
 export interface AuthUser {
   id: string;
   fullName: string;
   email: string;
   phone: string | null;
+  role: Role;
 }
 
 export function errorMessage(err: unknown): string {
@@ -30,13 +33,22 @@ export class AuthApi {
   readonly user = computed<AuthUser | null>(() => {
     const u = this.session()?.user;
     if (!u) return null;
+    const rawRole = u.app_metadata?.['role'] as string | undefined;
+    const role: Role =
+      rawRole === 'admin' || rawRole === 'agent' || rawRole === 'sector_manager'
+        ? rawRole
+        : 'citizen';
     return {
       id: u.id,
       fullName: (u.user_metadata?.['full_name'] as string) ?? u.email ?? '',
       email: u.email ?? '',
       phone: (u.user_metadata?.['phone'] as string) ?? null,
+      role,
     };
   });
+  readonly isAdmin = computed(() => this.user()?.role === 'admin');
+  readonly isAgent = computed(() => this.user()?.role === 'agent');
+  readonly isSectorManager = computed(() => this.user()?.role === 'sector_manager');
 
   constructor(private readonly router: Router) {
     this.ready = supabase.auth.getSession().then(({ data }) => this.session.set(data.session));
@@ -76,7 +88,7 @@ export class AuthApi {
     this.router.navigateByUrl('/');
   }
 
-   private wrap<T extends { data: unknown; error: Error | null }>(p: PromiseLike<T>) {
+  private wrap<T extends { data: unknown; error: Error | null }>(p: PromiseLike<T>) {
     return from(
       Promise.resolve(p).then((r) => {
         if (r.error) throw r.error;
