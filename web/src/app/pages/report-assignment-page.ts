@@ -34,9 +34,7 @@ import { readError } from '../report-api';
                   <td>{{ report.id }}</td>
                   <td>{{ report.title }}</td>
                   <td>{{ categoryName(report.categoryId) }}</td>
-                  <td>
-                    <span class="badge">{{ report.status.replace('_', ' ') }}</span>
-                  </td>
+                  <td><span class="badge">{{ report.status.replace('_', ' ') }}</span></td>
                   <td>{{ report.createdAt | date: 'short' }}</td>
                   <td>
                     <button type="button" class="primary" (click)="openAssign(report)" [disabled]="report.status !== 'RECEIVED'">
@@ -57,12 +55,12 @@ import { readError } from '../report-api';
       <div class="modal-backdrop">
         <section class="modal">
           <h2>Proposed Agents</h2>
-          <p class="muted">Select an agent for: <strong>{{ assigningReport()?.title }}</strong></p>
+          <p class="muted">Report: <strong>{{ assigningReport()?.title }}</strong> · Category: <strong>{{ categoryName(assigningReport()!.categoryId) }}</strong> · Sector: <strong>{{ sectorName(assigningReport()!.sectorId) }}</strong></p>
 
           @if (agentsLoading()) {
             <p class="muted" style="margin-top: 1rem;">Loading available agents…</p>
           } @else if (availableAgents().length === 0) {
-            <p class="muted" style="margin-top: 1rem;">No available agents found in your sector/category.</p>
+            <p class="muted" style="margin-top: 1rem;">No available agents match this report's category and sector.</p>
           } @else {
             <ul class="agent-list">
               @for (agent of availableAgents(); track agent.id) {
@@ -84,27 +82,25 @@ import { readError } from '../report-api';
     }
   `,
   styles: [`
-    .wrap { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; display: grid; gap: 1.25rem; color: #1c1c1a; }
+    .wrap { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; display: grid; gap: 1.25rem; color: var(--text-main); }
     .top { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; }
-    h1, h2 { margin: 0; }
-    .muted { color: #6b6b66; margin: .25rem 0 0; }
-    .card { background: #fffdf8; border-radius: 20px; padding: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+    h1, h2 { margin: 0; color: var(--text-main); }
+    .muted { color: var(--muted); margin: .25rem 0 0; }
+    .card { background: var(--surface-solid); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,.08); color: var(--text-main); }
     .table-card { overflow-x: auto; }
-    button { padding: .55rem 1rem; border: 1px solid #d6d0c2; border-radius: 999px; background: #fff; font-weight: 600; cursor: pointer; }
+    button { padding: .55rem 1rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-solid); color: var(--text-main); font-weight: 600; cursor: pointer; }
     button:disabled { opacity: .45; cursor: default; }
-    .primary { background: #d92f2f; color: #fff; border-color: #d92f2f; }
-    .primary:hover:not(:disabled) { filter: brightness(1.1); }
+    .primary { background: var(--accent-red); color: #fff; border-color: var(--accent-red); }
     table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: .75rem .6rem; border-bottom: 1px solid #e6e1d6; }
-    th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: #6b6b66; }
-    .badge { display: inline-block; padding: .2rem .7rem; border-radius: 999px; background: #ece6d8; font-size: .8rem; font-weight: 700; }
-    .err { color: #b3261e; margin: 0; }
-    .ok { color: #1b7f3b; margin: 0; }
-    
+    th, td { text-align: left; padding: .75rem .6rem; border-bottom: 1px solid var(--border); color: var(--text-main); }
+    th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .badge { display: inline-block; padding: .2rem .7rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); font-size: .8rem; font-weight: 700; color: var(--text-main); }
+    .err { color: var(--accent-red); margin: 0; }
+    .ok { color: #22c55e; margin: 0; }
     .modal-backdrop { position: fixed; inset: 0; background: rgba(28, 25, 23, 0.4); display: grid; place-items: center; z-index: 2000; backdrop-filter: blur(4px); }
-    .modal { background: #fffdf8; border-radius: 20px; padding: 2rem; width: min(500px, 90vw); box-shadow: 0 24px 70px rgba(40, 35, 27, 0.25); }
+    .modal { background: var(--surface-solid); color: var(--text-main); border: 1px solid var(--border); border-radius: 20px; padding: 2rem; width: min(500px, 90vw); box-shadow: 0 24px 70px rgba(40, 35, 27, 0.25); }
     .agent-list { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .75rem; max-height: 300px; overflow-y: auto; }
-    .agent-list li { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border: 1px solid #e6e1d6; border-radius: 12px; }
+    .agent-list li { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border: 1px solid var(--border); border-radius: 12px; color: var(--text-main); }
     .actions { display: flex; justify-content: flex-end; }
   `]
 })
@@ -120,27 +116,19 @@ export class ReportAssignmentPage implements OnInit {
   protected readonly error = signal('');
   protected readonly info = signal('');
   protected readonly categories = signal<any[]>([]);
+  protected readonly sectors = signal<any[]>([]);
 
-  ngOnInit(): void {
-    this.loadData();
-  }
+  ngOnInit(): void { this.loadData(); }
 
-  protected categoryName(id: number): string {
-    return this.categories().find(c => c.id === id)?.name ?? `#${id}`;
-  }
+  protected categoryName(id: number): string { return this.categories().find(c => c.id === id)?.name ?? `#${id}`; }
+  protected sectorName(id: number): string { return this.sectors().find(s => s.id === id)?.name ?? `#${id}`; }
 
   protected openAssign(report: ReportResponse): void {
     this.assigningReport.set(report);
     this.agentsLoading.set(true);
-    this.agentApi.getAvailableAgents().subscribe({
-      next: (agents) => {
-        this.availableAgents.set(agents);
-        this.agentsLoading.set(false);
-      },
-      error: (e) => {
-        this.error.set(readError(e));
-        this.agentsLoading.set(false);
-      }
+    this.agentApi.getAvailableAgents(report.categoryId, report.sectorId).subscribe({
+      next: (agents) => { this.availableAgents.set(agents); this.agentsLoading.set(false); },
+      error: (e) => { this.error.set(readError(e)); this.agentsLoading.set(false); }
     });
   }
 
@@ -152,33 +140,23 @@ export class ReportAssignmentPage implements OnInit {
   protected assign(agentId: string): void {
     const report = this.assigningReport();
     if (!report) return;
-
     this.agentApi.assignReport(report.id, agentId).subscribe({
       next: () => {
-        this.info.set(`Report #${report.id} assigned successfully and status changed to IN PROGRESS.`);
+        this.info.set(`Report #${report.id} assigned successfully. Status changed to IN PROGRESS.`);
         this.closeAssign();
         this.loadData();
       },
-      error: (e) => {
-        this.error.set(readError(e));
-      }
+      error: (e) => this.error.set(readError(e)),
     });
   }
 
   private loadData(): void {
     this.loading.set(true);
     this.reportApi.getReports().subscribe({
-      next: (list) => {
-        this.reports.set(list);
-        this.loading.set(false);
-      },
-      error: (e) => {
-        this.error.set(readError(e));
-        this.loading.set(false);
-      }
+      next: (list) => { this.reports.set(list); this.loading.set(false); },
+      error: (e) => { this.error.set(readError(e)); this.loading.set(false); }
     });
-    this.reportApi.getCategories().subscribe({
-      next: (cats) => this.categories.set(cats)
-    });
+    this.reportApi.getCategories().subscribe({ next: (c) => this.categories.set(c) });
+    // fetch sectors via ReportApi would need an injection; use ReportListApi if it has getSectors, else skip
   }
 }

@@ -3,7 +3,9 @@ import { FormsModule } from '@angular/forms';
 
 import { AdminUser, UsersApi } from '../users-api';
 import { readError } from '../report-api';
+import { ReportApi } from '../report-api';
 import { AuthApi } from '../auth/auth-api';
+import { Category, Sector } from '../models';
 
 @Component({
   selector: 'app-agents-page',
@@ -28,19 +30,23 @@ import { AuthApi } from '../auth/auth-api';
         <section class="card">
           <h2>{{ editingId() ? 'Edit agent' : 'New agent' }}</h2>
           <form (ngSubmit)="save()" class="form">
-            <label>Full name
-              <input name="fullName" [(ngModel)]="form.fullName" required />
-            </label>
-            <label>Email
-              <input name="email" type="email" [(ngModel)]="form.email" [disabled]="!!editingId()" required />
-            </label>
+            <label>Full name <input name="fullName" [(ngModel)]="form.fullName" required /></label>
+            <label>Email <input name="email" type="email" [(ngModel)]="form.email" [disabled]="!!editingId()" required /></label>
             @if (!editingId()) {
-              <label>Password
-                <input name="password" type="password" [(ngModel)]="form.password" />
-              </label>
+              <label>Password <input name="password" type="password" [(ngModel)]="form.password" /></label>
             }
-            <label>Phone
-              <input name="phone" [(ngModel)]="form.phone" />
+            <label>Phone <input name="phone" [(ngModel)]="form.phone" /></label>
+            <label>Category
+              <select name="categoryId" [(ngModel)]="form.categoryId">
+                <option [ngValue]="null">— Any —</option>
+                @for (c of categories(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
+              </select>
+            </label>
+            <label>Sector
+              <select name="sectorId" [(ngModel)]="form.sectorId">
+                <option [ngValue]="null">— Any —</option>
+                @for (s of sectors(); track s.id) { <option [ngValue]="s.id">{{ s.name }}{{ s.zone ? ' (' + s.zone + ')' : '' }}</option> }
+              </select>
             </label>
             <div class="actions">
               <button type="submit" class="primary" [disabled]="saving()">Save</button>
@@ -55,30 +61,23 @@ import { AuthApi } from '../auth/auth-api';
           <p class="muted">Loading…</p>
         } @else {
           <table>
-            <thead>
-              <tr><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th></th></tr>
-            </thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Category / Sector</th><th>Status</th><th></th></tr></thead>
             <tbody>
               @for (u of filtered(); track u.id) {
                 <tr>
                   <td>{{ u.fullName || '—' }}</td>
                   <td>{{ u.email }}</td>
                   <td>{{ u.phone || '—' }}</td>
-                  <td>
-                    <span class="badge" [class.off]="u.suspended">
-                      {{ u.suspended ? 'suspended' : 'active' }}
-                    </span>
-                  </td>
+                  <td>{{ categoryName(u.categoryId) }} / {{ sectorName(u.sectorId) }}</td>
+                  <td><span class="badge" [class.off]="u.suspended">{{ u.suspended ? 'suspended' : 'active' }}</span></td>
                   <td class="row-actions">
                     <button type="button" (click)="openEdit(u)">Edit</button>
-                    <button type="button" [disabled]="isMe(u)" (click)="toggleSuspend(u)">
-                      {{ u.suspended ? 'Activate' : 'Suspend' }}
-                    </button>
+                    <button type="button" [disabled]="isMe(u)" (click)="toggleSuspend(u)">{{ u.suspended ? 'Activate' : 'Suspend' }}</button>
                     <button type="button" class="danger" [disabled]="isMe(u)" (click)="remove(u)">Delete</button>
                   </td>
                 </tr>
               } @empty {
-                <tr><td colspan="5" class="muted">No agents found.</td></tr>
+                <tr><td colspan="6" class="muted">No agents found.</td></tr>
               }
             </tbody>
           </table>
@@ -87,34 +86,35 @@ import { AuthApi } from '../auth/auth-api';
     </main>
   `,
   styles: [`
-    .wrap { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; display: grid; gap: 1.25rem; color: #1c1c1a; }
+    .wrap { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; display: grid; gap: 1.25rem; color: var(--text-main); }
     .top { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
-    h1, h2 { margin: 0; }
-    .muted { color: #6b6b66; margin: .25rem 0 0; }
+    h1, h2 { margin: 0; color: var(--text-main); }
+    .muted { color: var(--muted); margin: .25rem 0 0; }
     .tools { display: flex; gap: .75rem; flex-wrap: wrap; }
-    .search { padding: .6rem .9rem; border: 1px solid #d6d0c2; border-radius: 999px; min-width: 200px; font: inherit; background: #fff; }
-    .card { background: #fffdf8; border-radius: 20px; padding: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+    .search { padding: .6rem .9rem; border: 1px solid var(--border); border-radius: 999px; min-width: 200px; font: inherit; background: var(--surface-solid); color: var(--text-main); }
+    .card { background: var(--surface-solid); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,.08); color: var(--text-main); }
     .table-card { overflow-x: auto; }
     .form { display: grid; gap: .9rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 1rem; }
-    label { display: grid; gap: .35rem; font-weight: 600; }
-    input { padding: .65rem .85rem; border: 1px solid #d6d0c2; border-radius: 12px; font: inherit; }
+    label { display: grid; gap: .35rem; font-weight: 600; color: var(--text-main); }
+    input, select { padding: .65rem .85rem; border: 1px solid var(--border); border-radius: 12px; font: inherit; background: var(--surface-solid); color: var(--text-main); }
     .actions { display: flex; gap: .75rem; align-items: end; }
-    button { padding: .55rem 1rem; border: 1px solid #d6d0c2; border-radius: 999px; background: #fff; font-weight: 600; cursor: pointer; }
+    button { padding: .55rem 1rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-solid); color: var(--text-main); font-weight: 600; cursor: pointer; }
     button:disabled { opacity: .45; cursor: default; }
-    .primary { background: #d92f2f; color: #fff; border-color: #d92f2f; }
-    .danger { color: #b3261e; border-color: #e3b5b1; }
+    .primary { background: var(--accent-red); color: #fff; border-color: var(--accent-red); }
+    .danger { color: var(--accent-red); border-color: var(--accent-red); }
     table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: .75rem .6rem; border-bottom: 1px solid #e6e1d6; }
-    th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: #6b6b66; }
+    th, td { text-align: left; padding: .75rem .6rem; border-bottom: 1px solid var(--border); color: var(--text-main); }
+    th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
     .row-actions { display: flex; gap: .4rem; flex-wrap: wrap; }
-    .badge { display: inline-block; padding: .2rem .7rem; border-radius: 999px; background: #ece6d8; font-size: .8rem; font-weight: 700; }
-    .badge.off { background: #f6d6d3; color: #b3261e; }
-    .err { color: #b3261e; margin: 0; }
-    .ok { color: #1b7f3b; margin: 0; }
+    .badge { display: inline-block; padding: .2rem .7rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); font-size: .8rem; font-weight: 700; color: var(--text-main); }
+    .badge.off { background: rgba(214, 48, 49, 0.15); color: var(--accent-red); border-color: var(--accent-red); }
+    .err { color: var(--accent-red); margin: 0; }
+    .ok { color: #22c55e; margin: 0; }
   `]
 })
 export class AgentsPage implements OnInit {
   private readonly api = inject(UsersApi);
+  private readonly reportApi = inject(ReportApi);
   private readonly auth = inject(AuthApi);
 
   protected readonly users = signal<AdminUser[]>([]);
@@ -125,8 +125,10 @@ export class AgentsPage implements OnInit {
   protected readonly formOpen = signal(false);
   protected readonly editingId = signal<string | null>(null);
   protected readonly query = signal('');
+  protected readonly categories = signal<Category[]>([]);
+  protected readonly sectors = signal<Sector[]>([]);
 
-  protected form = { fullName: '', email: '', phone: '', password: '' };
+  protected form = { fullName: '', email: '', phone: '', password: '', categoryId: null as number | null, sectorId: null as number | null };
 
   protected readonly filtered = computed(() => {
     const q = this.query().trim().toLowerCase();
@@ -137,22 +139,32 @@ export class AgentsPage implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.reportApi.getCategories().subscribe((c) => this.categories.set(c));
+    this.reportApi.getSectors().subscribe((s) => this.sectors.set(s));
   }
 
-  protected isMe(u: AdminUser): boolean {
-    return u.id === this.auth.user()?.id;
+  protected categoryName(id: number | null): string {
+    if (id == null) return 'Any';
+    return this.categories().find((c) => c.id === id)?.name ?? `#${id}`;
   }
+
+  protected sectorName(id: number | null): string {
+    if (id == null) return 'Any';
+    return this.sectors().find((s) => s.id === id)?.name ?? `#${id}`;
+  }
+
+  protected isMe(u: AdminUser): boolean { return u.id === this.auth.user()?.id; }
 
   protected openCreate(): void {
     this.editingId.set(null);
-    this.form = { fullName: '', email: '', phone: '', password: '' };
+    this.form = { fullName: '', email: '', phone: '', password: '', categoryId: null, sectorId: null };
     this.error.set('');
     this.formOpen.set(true);
   }
 
   protected openEdit(u: AdminUser): void {
     this.editingId.set(u.id);
-    this.form = { fullName: u.fullName, email: u.email, phone: u.phone ?? '', password: '' };
+    this.form = { fullName: u.fullName, email: u.email, phone: u.phone ?? '', password: '', categoryId: u.categoryId, sectorId: u.sectorId };
     this.error.set('');
     this.formOpen.set(true);
   }
@@ -163,66 +175,43 @@ export class AgentsPage implements OnInit {
   }
 
   protected save(): void {
-    this.error.set('');
-    this.info.set('');
-    const f = this.form;
-    const id = this.editingId();
-
-    if (!f.fullName.trim()) {
-      this.error.set('Full name is required.');
-      return;
-    }
-    if (!id && (!f.email.trim() || f.password.length < 6)) {
-      this.error.set('Email and a password of at least 6 characters are required.');
-      return;
-    }
+    this.error.set(''); this.info.set('');
+    const f = this.form; const id = this.editingId();
+    if (!f.fullName.trim()) { this.error.set('Full name is required.'); return; }
+    if (!id && (!f.email.trim() || f.password.length < 6)) { this.error.set('Email and a password of at least 6 characters are required.'); return; }
 
     this.saving.set(true);
     const request = id
-      ? this.api.update(id, { fullName: f.fullName.trim(), phone: f.phone.trim(), role: 'agent' })
+      ? this.api.update(id, { fullName: f.fullName.trim(), phone: f.phone.trim(), categoryId: f.categoryId, sectorId: f.sectorId })
       : this.api.create({
           email: f.email.trim(),
           password: f.password,
           fullName: f.fullName.trim(),
           phone: f.phone.trim() || null,
           role: 'agent',
+          categoryId: f.categoryId,
+          sectorId: f.sectorId,
         });
 
     request.subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.info.set(id ? 'Agent updated.' : 'Agent created.');
-        this.closeForm();
-        this.load();
-      },
-      error: (e) => {
-        this.saving.set(false);
-        this.error.set(readError(e));
-      },
+      next: () => { this.saving.set(false); this.info.set(id ? 'Agent updated.' : 'Agent created.'); this.closeForm(); this.load(); },
+      error: (e) => { this.saving.set(false); this.error.set(readError(e)); },
     });
   }
 
   protected toggleSuspend(u: AdminUser): void {
-    this.error.set('');
-    this.info.set('');
+    this.error.set(''); this.info.set('');
     this.api.update(u.id, { suspended: !u.suspended }).subscribe({
-      next: () => {
-        this.info.set(u.suspended ? 'Agent activated.' : 'Agent suspended.');
-        this.load();
-      },
+      next: () => { this.info.set(u.suspended ? 'Agent activated.' : 'Agent suspended.'); this.load(); },
       error: (e) => this.error.set(readError(e)),
     });
   }
 
   protected remove(u: AdminUser): void {
     if (!confirm(`Delete agent ${u.email}? This cannot be undone.`)) return;
-    this.error.set('');
-    this.info.set('');
+    this.error.set(''); this.info.set('');
     this.api.remove(u.id).subscribe({
-      next: () => {
-        this.info.set('Agent deleted.');
-        this.load();
-      },
+      next: () => { this.info.set('Agent deleted.'); this.load(); },
       error: (e) => this.error.set(readError(e)),
     });
   }
@@ -230,14 +219,8 @@ export class AgentsPage implements OnInit {
   private load(): void {
     this.loading.set(true);
     this.api.list().subscribe({
-      next: (list) => {
-        this.users.set(list);
-        this.loading.set(false);
-      },
-      error: (e) => {
-        this.error.set(readError(e));
-        this.loading.set(false);
-      },
+      next: (list) => { this.users.set(list); this.loading.set(false); },
+      error: (e) => { this.error.set(readError(e)); this.loading.set(false); },
     });
   }
 }

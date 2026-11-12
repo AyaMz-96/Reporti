@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from './config';
@@ -9,8 +9,11 @@ export class AgentApi {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthApi);
 
-  getAvailableAgents(): Observable<any[]> {
-    return this.http.get<any[]>(`${API_BASE_URL}/agents/available`, { headers: this.getHeaders() });
+  getAvailableAgents(categoryId?: number | null, sectorId?: number | null): Observable<any[]> {
+    let params = new HttpParams();
+    if (categoryId != null) params = params.set('categoryId', String(categoryId));
+    if (sectorId != null) params = params.set('sectorId', String(sectorId));
+    return this.http.get<any[]>(`${API_BASE_URL}/agents/available`, { headers: this.getHeaders(), params });
   }
 
   assignReport(reportId: number, agentId: string): Observable<any> {

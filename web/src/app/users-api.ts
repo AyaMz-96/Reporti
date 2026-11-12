@@ -13,6 +13,8 @@ export interface AdminUser {
   role: Role;
   suspended: boolean;
   createdAt: string;
+  categoryId: number | null;
+  sectorId: number | null;
 }
 
 export interface CreateUserBody {
@@ -21,6 +23,8 @@ export interface CreateUserBody {
   fullName: string;
   phone: string | null;
   role: Role;
+  categoryId?: number | null;
+  sectorId?: number | null;
 }
 
 export interface UpdateUserBody {
@@ -28,6 +32,8 @@ export interface UpdateUserBody {
   phone?: string;
   role?: Role;
   suspended?: boolean;
+  categoryId?: number | null;
+  sectorId?: number | null;
 }
 
 interface RawUser {
@@ -35,8 +41,19 @@ interface RawUser {
   email?: string;
   created_at?: string;
   banned_until?: string | null;
-  user_metadata?: { full_name?: string; phone?: string | null };
+  user_metadata?: {
+    full_name?: string;
+    phone?: string | null;
+    categoryId?: number | string | null;
+    sectorId?: number | string | null;
+  };
   app_metadata?: { role?: string };
+}
+
+function toNumOrNull(v: number | string | null | undefined): number | null {
+  if (v === null || v === undefined) return null;
+  const n = typeof v === 'number' ? v : Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -53,11 +70,7 @@ export class UsersApi {
     return this.http
       .get<{ users: RawUser[] }>(this.url, { headers: this.headers() })
       .pipe(
-        map((r) =>
-          r.users
-            .map((u) => this.toUser(u))
-            .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-        ),
+        map((r) => r.users.map((u) => this.toUser(u)).sort((a, b) => b.createdAt.localeCompare(a.createdAt))),
       );
   }
 
@@ -83,6 +96,8 @@ export class UsersApi {
       role: role === 'admin' || role === 'agent' || role === 'sector_manager' ? role : 'citizen',
       suspended: !!u.banned_until && new Date(u.banned_until) > new Date(),
       createdAt: u.created_at ?? '',
+      categoryId: toNumOrNull(u.user_metadata?.categoryId),
+      sectorId: toNumOrNull(u.user_metadata?.sectorId),
     };
   }
 }

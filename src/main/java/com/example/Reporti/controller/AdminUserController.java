@@ -20,9 +20,11 @@ public class AdminUserController {
             @NotBlank @Size(min = 6) String password,
             @NotBlank String fullName,
             String phone,
-            String role) {}
+            String role,
+            Integer categoryId,
+            Integer sectorId) {}
 
-    public record UpdateUserRequest(String fullName, String phone, String role, Boolean suspended) {}
+    public record UpdateUserRequest(String fullName, String phone, String role, Boolean suspended, Integer categoryId, Integer sectorId) {}
 
     private final AdminUserService service;
 
@@ -41,7 +43,7 @@ public class AdminUserController {
             @RequestHeader(value = "Authorization", required = false) String auth,
             @Valid @RequestBody CreateUserRequest r) {
         service.requireAdmin(auth);
-        return json(service.create(r.email(), r.password(), r.fullName(), r.phone(), r.role()));
+        return json(service.create(r.email(), r.password(), r.fullName(), r.phone(), r.role(), r.categoryId(), r.sectorId()));
     }
 
     @PutMapping("/{id}")
@@ -58,7 +60,7 @@ public class AdminUserController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot remove your own admin role");
             }
         }
-        return json(service.update(id, r.fullName(), r.phone(), r.role(), r.suspended()));
+        return json(service.update(id, r.fullName(), r.phone(), r.role(), r.suspended(), r.categoryId(), r.sectorId()));
     }
 
     @DeleteMapping("/{id}")
