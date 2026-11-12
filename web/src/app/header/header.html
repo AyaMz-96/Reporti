@@ -10,16 +10,19 @@
     <a routerLink="/map" routerLinkActive="active">Map</a>
     <a routerLink="/contact" routerLinkActive="active">Contact</a>
     <a routerLink="/about" routerLinkActive="active">About</a>
+    
     @if (auth.isAdmin()) {
       <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
       <a routerLink="/admin/users" routerLinkActive="active">Users</a>
       <a routerLink="/admin/agents" routerLinkActive="active">Agents</a>
       <a routerLink="/admin/categories" routerLinkActive="active">Categories</a>
     }
+    @if (auth.isAgent() || auth.isAdmin()) {
+      <a routerLink="/agent/assignments" routerLinkActive="active">Assignments</a>
+    }
   </nav>
 
   <div class="nav-actions">
-
     @if (auth.user(); as user) {
       <a class="login-btn" routerLink="/account">{{ user.fullName }} · {{ user.role }}</a>
       <button type="button" class="login-btn" (click)="logout()">Logout</button>

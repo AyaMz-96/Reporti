@@ -1,4 +1,3 @@
-// web/src/app/app.routes.ts
 import { Routes } from '@angular/router';
 
 import { Home } from './pages/home';
@@ -18,6 +17,7 @@ import { UsersPage } from './pages/users-page';
 import { DashboardPage } from './pages/dashboard-page';
 import { CategoriesPage } from './pages/categories-page';
 import { AgentsPage } from './pages/agents-page';
+import { ReportAssignmentPage } from './pages/report-assignment-page';
 
 export const routes: Routes = [
   { path: '', component: Home, title: 'Reporti' },
@@ -30,10 +30,12 @@ export const routes: Routes = [
   { path: 'forgot-password', component: ForgotPasswordPage },
   { path: 'reset-password', component: ResetPasswordPage },
   { path: 'account', component: AccountPage, canActivate: [authGuard] },
+  
   { path: 'dashboard', component: DashboardPage, title: 'Dashboard', canActivate: [adminGuard] },
   { path: 'admin/users', component: UsersPage, title: 'Users', canActivate: [adminGuard] },
   { path: 'admin/agents', component: AgentsPage, title: 'Agents', canActivate: [adminGuard] },
   { path: 'admin/categories', component: CategoriesPage, title: 'Categories', canActivate: [adminGuard] },
+  { path: 'agent/assignments', component: ReportAssignmentPage, title: 'Assignments', canActivate: [authGuard] },
 
   {
     path: 'contact',
@@ -48,6 +50,5 @@ export const routes: Routes = [
     data: { title: 'About Reporti', message: 'Reporti helps communities document and follow urban issues.' },
   },
 
-  // Wildcard route (must remain last)
   { path: '**', redirectTo: '', pathMatch: 'full' },
 ];

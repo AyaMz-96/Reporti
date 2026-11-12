@@ -24,6 +24,7 @@ import { UsersApi } from '../users-api';
           <a class="card link" routerLink="/admin/users">Manage users</a>
           <a class="card link" routerLink="/admin/agents">Manage agents</a>
           <a class="card link" routerLink="/admin/categories">Manage categories</a>
+          <a class="card link" routerLink="/agent/assignments">Assign Reports</a>
           <a class="card link" routerLink="/reports">All reports</a>
           <a class="card link" routerLink="/map">Reports map</a>
         </section>
