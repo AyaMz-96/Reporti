@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.reporti.data.AuthViewModel
 import com.example.reporti.ui.ReportFormScreen
+import com.example.reporti.ui.admin.AdminHubScreen
 import com.example.reporti.ui.assignments.AssignmentScreen
 import com.example.reporti.ui.assignments.AssignmentViewModel
 import com.example.reporti.ui.auth.AuthGate
@@ -39,20 +40,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
         setContent {
             ReportiTheme {
-                // CRITICAL: without this Surface, screens without their own background
-                // (login/register/forgot password) inherit the white window background
-                // from Theme.Material.Light in themes.xml, and dark theme text becomes
-                // invisible. Surface fixes both light and dark mode.
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
-                    AuthGate { authVm ->
-                        MainScreen(authVm = authVm)
-                    }
+                    AuthGate { authVm -> MainScreen(authVm = authVm) }
                 }
             }
         }
@@ -62,6 +56,7 @@ class MainActivity : ComponentActivity() {
 enum class Screen(val title: String, @DrawableRes val icon: Int) {
     Home("Home", R.drawable.ic_home),
     Report("Report", R.drawable.ic_edit),
+    Admin("Admin", R.drawable.ic_person),
     Assignments("Assignments", R.drawable.ic_notifications),
     Map("Map", R.drawable.ic_map),
     Notifications("Notifications", R.drawable.ic_notifications),
@@ -71,36 +66,25 @@ enum class Screen(val title: String, @DrawableRes val icon: Int) {
 @Composable
 fun MainScreen(authVm: AuthViewModel) {
     val currentUser = authVm.state.user
-    val userRole = currentUser?.role ?: "citizen"
+    val role = currentUser?.role ?: "citizen"
 
-    // The /agents/me/* endpoints only accept `agent` and `sector_manager`.
-    // Admins use the web dashboard for dispatch, so hide the tab on mobile.
-    val canUseAssignments = userRole == "agent" || userRole == "sector_manager"
-
-    val visibleScreens = remember(canUseAssignments) {
+    val visibleScreens = remember(role) {
         Screen.entries.filter { screen ->
             when (screen) {
-                Screen.Assignments -> canUseAssignments
+                Screen.Assignments -> role == "agent" || role == "sector_manager"
+                Screen.Admin -> role == "admin"
                 else -> true
             }
         }
     }
 
-    // remember (no key) resets to Home on every fresh login because the whole
-    // MainScreen composition is disposed when AuthGate switches to the login flow.
     var selectedTab by remember { mutableStateOf(Screen.Home) }
-
-    // If the tab isn't visible for this role (e.g. admin), fall back to Home
     LaunchedEffect(visibleScreens) {
         if (selectedTab !in visibleScreens) selectedTab = Screen.Home
     }
 
-    // Activity-scoped VM — clear its state every time the logged-in user changes
-    // so agent A's tasks never leak into agent B's or admin's session.
     val assignmentVm: AssignmentViewModel = viewModel()
-    LaunchedEffect(currentUser?.id) {
-        assignmentVm.reset()
-    }
+    LaunchedEffect(currentUser?.id) { assignmentVm.reset() }
 
     val notificationVm: NotificationViewModel = viewModel()
     val homeVm: HomeViewModel = viewModel()
@@ -110,9 +94,7 @@ fun MainScreen(authVm: AuthViewModel) {
     val navBarHeight = with(LocalDensity.current) { navBarHeightPx.toDp() }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
     ) {
         when (selectedTab) {
             Screen.Home -> Box(Modifier.fillMaxSize().statusBarsPadding()) {
@@ -126,19 +108,19 @@ fun MainScreen(authVm: AuthViewModel) {
                 bottomContentPadding = navBarHeight + 16.dp,
             )
             Screen.Assignments -> Box(Modifier.fillMaxSize().statusBarsPadding()) {
-                AssignmentScreen(
-                    vm = assignmentVm,
+                AssignmentScreen(vm = assignmentVm, bottomContentPadding = navBarHeight + 16.dp)
+            }
+            Screen.Admin -> Box(Modifier.fillMaxSize().statusBarsPadding()) {
+                AdminHubScreen(
                     bottomContentPadding = navBarHeight + 16.dp,
+                    authVm = authVm,
                 )
             }
             Screen.Map -> Box(Modifier.fillMaxSize().statusBarsPadding()) {
                 MapScreen(bottomContentPadding = navBarHeight + 16.dp)
             }
             Screen.Profile -> Box(Modifier.fillMaxSize().statusBarsPadding()) {
-                AccountScreen(
-                    vm = authVm,
-                    bottomContentPadding = navBarHeight + 16.dp,
-                )
+                AccountScreen(vm = authVm, bottomContentPadding = navBarHeight + 16.dp)
             }
         }
 
@@ -154,9 +136,7 @@ fun MainScreen(authVm: AuthViewModel) {
             shadowElevation = 8.dp,
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 2.dp, vertical = 10.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceAround,
             ) {
                 visibleScreens.forEach { screen ->
@@ -176,16 +156,13 @@ fun MainScreen(authVm: AuthViewModel) {
                             modifier = Modifier
                                 .size(40.dp)
                                 .background(
-                                    if (isSelected) MaterialTheme.colorScheme.primary.copy(0.12f)
-                                    else Color.Transparent,
+                                    if (isSelected) MaterialTheme.colorScheme.primary.copy(0.12f) else Color.Transparent,
                                     CircleShape,
                                 ),
                             contentAlignment = Alignment.Center,
                         ) {
                             BadgedBox(badge = {
-                                if (badge > 0) Badge {
-                                    Text(if (badge > 99) "99+" else badge.toString())
-                                }
+                                if (badge > 0) Badge { Text(if (badge > 99) "99+" else badge.toString()) }
                             }) {
                                 Icon(
                                     painter = painterResource(id = screen.icon),
