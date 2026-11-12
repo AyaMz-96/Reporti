@@ -3,16 +3,15 @@ package com.example.reporti.data
 import android.os.Build
 
 object Config {
-    // Local Wi-Fi IP address of your PC: 192.168.100.27
-    //  - Physical phone on Wi-Fi: "http://192.168.100.27:8090/api/"
-    //  - Emulator:               "http://10.0.2.2:8090/api/"
+    // Emulator: 10.0.2.2 is the alias for the host machine
+    // Physical phone over USB: use 127.0.0.1 and run `adb reverse tcp:8090 tcp:8090`
+    // Physical phone on WiFi: switch the else-branch back to "http://<PC-LAN-IP>:8090/api/"
     val API_BASE_URL: String = if (isEmulator) {
         "http://10.0.2.2:8090/api/"
     } else {
-        "http://192.168.100.27:8090/api/"
+        "http://127.0.0.1:8090/api/"
     }
 
-    // TEMPORARY until real authentication exists: must be the id of an existing row in the users table.
     const val CITIZEN_ID = 1L
 
     private val isEmulator: Boolean

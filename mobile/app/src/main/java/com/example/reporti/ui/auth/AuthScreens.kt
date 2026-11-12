@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.reporti.data.AuthViewModel
@@ -21,14 +22,24 @@ import kotlinx.coroutines.launch
 
 private enum class AuthScreen { LOGIN, REGISTER, FORGOT }
 
+/**
+ * Renders the login flow until the user is authenticated, then calls `content`
+ * with the shared AuthViewModel so MainScreen and AuthGate operate on the SAME
+ * instance (required for logout to bounce the user back to the login screen).
+ */
 @Composable
-fun AuthGate(vm: AuthViewModel = viewModel(), content: @Composable () -> Unit) {
+fun AuthGate(
+    vm: AuthViewModel = viewModel(),
+    content: @Composable (AuthViewModel) -> Unit,
+) {
     val state = vm.state
     when {
         !state.ready && state.user == null ->
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
         state.user == null -> AuthFlow(vm)
-        else -> content()
+        else -> content(vm)
     }
 }
 
@@ -144,10 +155,13 @@ private fun ForgotPasswordScreen(vm: AuthViewModel, onBack: () -> Unit) {
     }
 }
 
-/** Agent/sector-manager-only screen section that lets the user pick their own
- *  assignment categories and sector, which drives the "Available for you" list. */
+/** Profile page. Accepts a bottomContentPadding so the "Log out" button is
+ *  never hidden behind the floating navigation bar. */
 @Composable
-fun AccountScreen(vm: AuthViewModel = viewModel()) {
+fun AccountScreen(
+    vm: AuthViewModel = viewModel(),
+    bottomContentPadding: Dp = 0.dp,
+) {
     val user = vm.state.user ?: return
     val isAgent = user.role == "agent" || user.role == "sector_manager"
 
@@ -160,7 +174,6 @@ fun AccountScreen(vm: AuthViewModel = viewModel()) {
     var localError by remember { mutableStateOf<String?>(null) }
     var loadingOptions by remember { mutableStateOf(isAgent) }
 
-    // Refresh local selection when the user is refreshed by the ViewModel (after save)
     LaunchedEffect(user.id, user.categoryIds, user.sectorId) {
         selectedCategoryIds = user.categoryIds
         selectedSectorId = user.sectorId
@@ -177,6 +190,8 @@ fun AccountScreen(vm: AuthViewModel = viewModel()) {
             loadingOptions = false
         }
     }
+
+    val bottomPad = if (bottomContentPadding > 0.dp) bottomContentPadding else 120.dp
 
     Column(
         modifier = Modifier
@@ -259,6 +274,9 @@ fun AccountScreen(vm: AuthViewModel = viewModel()) {
             onClick = { vm.logout() },
             modifier = Modifier.fillMaxWidth(),
         ) { Text("Log out") }
+
+        // Bottom spacer so the floating nav bar never covers the logout button
+        Spacer(Modifier.height(bottomPad))
     }
 }
 

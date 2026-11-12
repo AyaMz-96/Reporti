@@ -27,6 +27,16 @@ class AssignmentViewModel : ViewModel() {
     private val _state = MutableStateFlow(AssignmentUiState())
     val state: StateFlow<AssignmentUiState> = _state.asStateFlow()
 
+    /**
+     * Called by MainScreen whenever the logged-in user changes, so an agent's
+     * data doesn't leak into the next session (e.g. logging out and back in
+     * as a different user, or logging in as an admin who can't use these
+     * endpoints at all).
+     */
+    fun reset() {
+        _state.value = AssignmentUiState()
+    }
+
     fun load() {
         _state.update { it.copy(availableLoading = true, activeLoading = true, error = null) }
 
@@ -64,7 +74,6 @@ class AssignmentViewModel : ViewModel() {
                         message = "You took report #${report.id}. It's now IN PROGRESS.",
                     )
                 }
-                // Refresh both lists: the claimed item moves from Available to Active
                 load()
             } catch (e: CancellationException) {
                 throw e

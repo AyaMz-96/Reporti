@@ -25,6 +25,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.reporti.data.AuthViewModel
 import com.example.reporti.ui.ReportFormScreen
 import com.example.reporti.ui.assignments.AssignmentScreen
+import com.example.reporti.ui.assignments.AssignmentViewModel
 import com.example.reporti.ui.auth.AuthGate
 import com.example.reporti.ui.auth.AccountScreen
 import com.example.reporti.ui.home.HomeScreen
@@ -41,8 +42,17 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ReportiTheme {
-                AuthGate {
-                    MainScreen()
+                // CRITICAL: without this Surface, screens without their own background
+                // (login/register/forgot password) inherit the white window background
+                // from Theme.Material.Light in themes.xml, and dark theme text becomes
+                // invisible. Surface fixes both light and dark mode.
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background,
+                ) {
+                    AuthGate { authVm ->
+                        MainScreen(authVm = authVm)
+                    }
                 }
             }
         }
@@ -59,25 +69,37 @@ enum class Screen(val title: String, @DrawableRes val icon: Int) {
 }
 
 @Composable
-fun MainScreen(authVm: AuthViewModel = viewModel()) {
-    val userRole = authVm.state.user?.role ?: "citizen"
-    val isAgentOrAdmin = userRole == "agent" || userRole == "admin" || userRole == "sector_manager"
+fun MainScreen(authVm: AuthViewModel) {
+    val currentUser = authVm.state.user
+    val userRole = currentUser?.role ?: "citizen"
 
-    // Filter visible tabs based on the current role
-    val visibleScreens = remember(isAgentOrAdmin) {
+    // The /agents/me/* endpoints only accept `agent` and `sector_manager`.
+    // Admins use the web dashboard for dispatch, so hide the tab on mobile.
+    val canUseAssignments = userRole == "agent" || userRole == "sector_manager"
+
+    val visibleScreens = remember(canUseAssignments) {
         Screen.entries.filter { screen ->
             when (screen) {
-                Screen.Assignments -> isAgentOrAdmin
+                Screen.Assignments -> canUseAssignments
                 else -> true
             }
         }
     }
 
+    // remember (no key) resets to Home on every fresh login because the whole
+    // MainScreen composition is disposed when AuthGate switches to the login flow.
     var selectedTab by remember { mutableStateOf(Screen.Home) }
 
-    // If the current tab disappears (e.g. on logout + re-login as citizen), reset to Home
+    // If the tab isn't visible for this role (e.g. admin), fall back to Home
     LaunchedEffect(visibleScreens) {
         if (selectedTab !in visibleScreens) selectedTab = Screen.Home
+    }
+
+    // Activity-scoped VM — clear its state every time the logged-in user changes
+    // so agent A's tasks never leak into agent B's or admin's session.
+    val assignmentVm: AssignmentViewModel = viewModel()
+    LaunchedEffect(currentUser?.id) {
+        assignmentVm.reset()
     }
 
     val notificationVm: NotificationViewModel = viewModel()
@@ -104,13 +126,19 @@ fun MainScreen(authVm: AuthViewModel = viewModel()) {
                 bottomContentPadding = navBarHeight + 16.dp,
             )
             Screen.Assignments -> Box(Modifier.fillMaxSize().statusBarsPadding()) {
-                AssignmentScreen(bottomContentPadding = navBarHeight + 16.dp)
+                AssignmentScreen(
+                    vm = assignmentVm,
+                    bottomContentPadding = navBarHeight + 16.dp,
+                )
             }
             Screen.Map -> Box(Modifier.fillMaxSize().statusBarsPadding()) {
                 MapScreen(bottomContentPadding = navBarHeight + 16.dp)
             }
             Screen.Profile -> Box(Modifier.fillMaxSize().statusBarsPadding()) {
-                AccountScreen()
+                AccountScreen(
+                    vm = authVm,
+                    bottomContentPadding = navBarHeight + 16.dp,
+                )
             }
         }
 
