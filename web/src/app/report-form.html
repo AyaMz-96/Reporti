@@ -66,6 +66,29 @@
           }
         </div>
       </div>
+
+      <div class="field">
+        <label>Priority</label>
+        <div class="priority-row" role="radiogroup" aria-label="Priority level">
+          @for (p of priorities; track p) {
+            <button
+              type="button"
+              role="radio"
+              class="priority-chip"
+              [class.active]="form.controls.priority.value === p"
+              [class.urgent]="p === 'URGENT'"
+              [class.normal]="p === 'NORMAL'"
+              [class.low]="p === 'LOW'"
+              [attr.aria-checked]="form.controls.priority.value === p"
+              [disabled]="form.disabled"
+              (click)="selectPriority(p)"
+            >
+              {{ p }}
+            </button>
+          }
+        </div>
+        <small class="priority-hint">Urgent reports are highlighted for agents and admins.</small>
+      </div>
     </section>
 
     <section class="form-section">
@@ -84,6 +107,11 @@
       @if (locationError()) {
         <small class="error">{{ locationError() }}</small>
       }
+
+      <div class="map-shell">
+        <div class="map" #locationMap aria-label="Pick a location on the map"></div>
+      </div>
+      <small class="map-hint">Click the map to place a pin, or drag the pin to adjust it.</small>
 
       <div class="two-columns location-fields">
         <div class="field">

@@ -127,6 +127,62 @@ textarea {
   gap: 0.75rem;
 }
 
+/* ----- Priority chips ----- */
+
+.priority-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.priority-chip {
+  padding: 0.55rem 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-solid);
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  font-family: inherit;
+}
+
+.priority-chip:hover:not(:disabled) {
+  border-color: var(--accent-red);
+}
+
+.priority-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.priority-chip.active.urgent {
+  background: #C62828;
+  color: #fff;
+  border-color: #C62828;
+}
+
+.priority-chip.active.normal {
+  background: #1565C0;
+  color: #fff;
+  border-color: #1565C0;
+}
+
+.priority-chip.active.low {
+  background: #6B7280;
+  color: #fff;
+  border-color: #6B7280;
+}
+
+.priority-hint {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* ----- Location picker ----- */
+
 .location-button {
   display: inline-flex;
   align-items: center;
@@ -154,6 +210,55 @@ button:disabled {
 
 .location-fields .field {
   margin-bottom: 0;
+}
+
+.map-shell {
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface-solid);
+}
+
+.map {
+  width: 100%;
+  height: 320px;
+}
+
+.map-hint {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.report-pin {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+:host-context(.dark-theme) .map .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9);
+}
+
+:host-context(.dark-theme) .map-shell {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: #464842;
+}
+
+:host-context(.dark-theme) .map .leaflet-control-zoom a {
+  background: #50524c;
+  color: #F7F4E8;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+:host-context(.dark-theme) .map .leaflet-control-attribution {
+  background: rgba(70, 72, 66, 0.85);
+  color: #C9CBC2;
+}
+
+:host-context(.dark-theme) .map .leaflet-control-attribution a {
+  color: #FF767B;
 }
 
 .file-input {
@@ -232,6 +337,7 @@ button:disabled {
   border-radius: 8px;
   background: var(--surface-solid);
   color: var(--text-main);
+  border: 1px solid var(--border);
 }
 
 .files li span {
@@ -261,8 +367,10 @@ button:disabled {
   .two-columns {
     grid-template-columns: 1fr;
   }
-
   .form-section {
     padding: 1rem;
+  }
+  .map {
+    height: 260px;
   }
 }

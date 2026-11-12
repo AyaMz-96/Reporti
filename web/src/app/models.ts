@@ -10,6 +10,9 @@ export interface Sector {
   zone: string | null;
 }
 
+export type ReportStatus = 'RECEIVED' | 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED';
+export type PriorityLevel = 'URGENT' | 'NORMAL' | 'LOW';
+
 export interface CreateReportRequest {
   title: string;
   description: string;
@@ -17,10 +20,8 @@ export interface CreateReportRequest {
   longitude: number;
   categoryId: number;
   sectorId: number;
+  priority?: PriorityLevel;
 }
-
-export type ReportStatus = 'RECEIVED' | 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED';
-export type PriorityLevel = 'URGENT' | 'NORMAL' | 'LOW';
 
 export interface ReportResponse {
   id: number;
@@ -35,6 +36,7 @@ export interface ReportResponse {
   createdAt: string;
   mediaUrls: string[];
 }
+
 export type NotificationType =
   | 'STATUS_CHANGED'
   | 'NEW_COMMENT'
@@ -44,7 +46,6 @@ export type NotificationType =
   | 'DISPUTE'
   | 'AGENT_REFUSAL'
   | 'SYSTEM_ALERT';
-
 
 export interface AppNotification {
   id: number;

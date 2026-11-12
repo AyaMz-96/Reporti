@@ -1,18 +1,42 @@
-import { Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  DestroyRef,
+  ElementRef,
+  OnInit,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import {
   AbstractControl,
   NonNullableFormBuilder,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import * as L from 'leaflet';
 import { forkJoin } from 'rxjs';
 
-import { Category, Sector } from './models';
+import { Category, PriorityLevel, Sector } from './models';
 import { ReportApi, readError } from './report-api';
 
-// Same limits as spring.servlet.multipart.* in application.properties
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_TOTAL_BYTES = 30 * 1024 * 1024;
+
+const DEFAULT_CENTER: L.LatLngExpression = [36.8065, 10.1815];
+const DEFAULT_ZOOM = 8;
+const PIN_ZOOM = 15;
+
+const pinIcon = L.divIcon({
+  className: 'report-pin',
+  html: `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="40" viewBox="0 0 28 40">
+           <path d="M14 0C6.27 0 0 6.27 0 14c0 10.5 14 26 14 26s14-15.5 14-26c0-7.73-6.27-14-14-14z"
+                 fill="#d63031" stroke="#fff" stroke-width="2"/>
+           <circle cx="14" cy="14" r="5" fill="#fff"/>
+         </svg>`,
+  iconSize: [28, 40],
+  iconAnchor: [14, 40],
+});
 
 @Component({
   selector: 'app-report-form',
@@ -20,16 +44,23 @@ const MAX_TOTAL_BYTES = 30 * 1024 * 1024;
   templateUrl: './report-form.html',
   styleUrl: './report-form.css',
 })
-export class ReportForm implements OnInit {
+export class ReportForm implements OnInit, AfterViewInit {
   private readonly api = inject(ReportApi);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly photoInput = viewChild<ElementRef<HTMLInputElement>>('photoInput');
+  private readonly mapContainer = viewChild<ElementRef<HTMLDivElement>>('locationMap');
+
+  private map: L.Map | null = null;
+  private marker: L.Marker | null = null;
+
+  readonly priorities: PriorityLevel[] = ['URGENT', 'NORMAL', 'LOW'];
 
   readonly form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(150)]],
     description: ['', [Validators.required, Validators.maxLength(2000)]],
     categoryId: this.fb.control<number | null>(null, Validators.required),
     sectorId: this.fb.control<number | null>(null, Validators.required),
+    priority: this.fb.control<PriorityLevel>('NORMAL', Validators.required),
     latitude: this.fb.control<number | null>(null, [
       Validators.required,
       Validators.min(-90),
@@ -42,7 +73,6 @@ export class ReportForm implements OnInit {
     ]),
   });
 
-  // The app is zoneless, so everything that changes after an async call must be a signal
   readonly categories = signal<Category[]>([]);
   readonly sectors = signal<Sector[]>([]);
   readonly files = signal<File[]>([]);
@@ -55,8 +85,11 @@ export class ReportForm implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
 
-  /** Set when the report was created but its photos failed, so a retry never creates a duplicate report. */
   readonly pendingUploadId = signal<number | null>(null);
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.map?.remove());
+  }
 
   ngOnInit(): void {
     forkJoin({
@@ -75,12 +108,20 @@ export class ReportForm implements OnInit {
     });
   }
 
+  ngAfterViewInit(): void {
+    this.initMap();
+  }
+
   showError(control: AbstractControl): boolean {
     return control.invalid && control.touched;
   }
 
   formatSize(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  selectPriority(level: PriorityLevel): void {
+    this.form.controls.priority.setValue(level);
   }
 
   useMyLocation(): void {
@@ -94,10 +135,9 @@ export class ReportForm implements OnInit {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        this.form.patchValue({
-          latitude: Number(position.coords.latitude.toFixed(6)),
-          longitude: Number(position.coords.longitude.toFixed(6)),
-        });
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        this.setPinAt(lat, lng, true);
         this.locating.set(false);
       },
       (error) => {
@@ -137,7 +177,6 @@ export class ReportForm implements OnInit {
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
-    // The report already exists, only the photos are left to send
     const pendingId = this.pendingUploadId();
     if (pendingId !== null) {
       this.uploadPhotos(pendingId);
@@ -160,6 +199,7 @@ export class ReportForm implements OnInit {
         longitude: value.longitude!,
         categoryId: value.categoryId!,
         sectorId: value.sectorId!,
+        priority: value.priority,
       })
       .subscribe({
         next: (report) => this.uploadPhotos(report.id),
@@ -197,6 +237,8 @@ export class ReportForm implements OnInit {
     this.form.enable();
     this.form.reset();
     this.files.set([]);
+    this.marker?.setOpacity(0);
+    this.map?.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
     const input = this.photoInput();
     if (input) {
@@ -204,5 +246,78 @@ export class ReportForm implements OnInit {
     }
 
     this.successMessage.set(`Report #${reportId} submitted. Thank you!`);
+  }
+
+  private initMap(): void {
+    const el = this.mapContainer()?.nativeElement;
+    if (!el || this.map) return;
+
+    const formValue = this.form.getRawValue();
+    const hasPin =
+      typeof formValue.latitude === 'number' &&
+      typeof formValue.longitude === 'number';
+
+    const initialCenter: L.LatLngExpression = hasPin
+      ? [formValue.latitude!, formValue.longitude!]
+      : DEFAULT_CENTER;
+    const initialZoom = hasPin ? PIN_ZOOM : DEFAULT_ZOOM;
+
+    this.map = L.map(el, {
+      scrollWheelZoom: false,
+      zoomControl: true,
+    }).setView(initialCenter, initialZoom);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(this.map);
+
+    this.marker = L.marker(initialCenter, {
+      icon: pinIcon,
+      draggable: true,
+      autoPan: true,
+      opacity: hasPin ? 1 : 0,
+    }).addTo(this.map);
+
+    this.marker.on('dragend', () => {
+      const p = this.marker!.getLatLng();
+      this.setPinAt(p.lat, p.lng, false);
+    });
+
+    this.map.on('click', (e: L.LeafletMouseEvent) => {
+      this.setPinAt(e.latlng.lat, e.latlng.lng, false);
+    });
+
+    this.form.valueChanges.subscribe((v) => {
+      const lat = v.latitude;
+      const lng = v.longitude;
+      if (
+        typeof lat === 'number' &&
+        typeof lng === 'number' &&
+        Number.isFinite(lat) &&
+        Number.isFinite(lng)
+      ) {
+        this.marker?.setLatLng([lat, lng]);
+        this.marker?.setOpacity(1);
+      } else {
+        this.marker?.setOpacity(0);
+      }
+    });
+
+    setTimeout(() => this.map?.invalidateSize(), 0);
+  }
+
+  private setPinAt(lat: number, lng: number, recenter: boolean): void {
+    if (!this.marker || !this.map) return;
+    this.marker.setLatLng([lat, lng]);
+    this.marker.setOpacity(1);
+    if (recenter) {
+      this.map.setView([lat, lng], Math.max(this.map.getZoom(), PIN_ZOOM));
+    }
+    this.form.patchValue(
+      { latitude: Number(lat.toFixed(6)), longitude: Number(lng.toFixed(6)) },
+      { emitEvent: false },
+    );
   }
 }

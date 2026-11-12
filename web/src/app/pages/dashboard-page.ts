@@ -1,12 +1,10 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 
 import { AuthApi } from '../auth/auth-api';
 import { UsersApi } from '../users-api';
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [RouterLink],
   template: `
     <main class="wrap">
       @if (auth.user(); as user) {
@@ -29,8 +27,8 @@ import { UsersApi } from '../users-api';
   `,
   styles: [`
     .wrap { max-width: 900px; margin: 2rem auto; padding: 0 1rem; display: grid; gap: 1.25rem; color: var(--text-main); }
-    .card { background: var(--surface-solid); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
-    h1 { margin: 0 0 .5rem; }
+    .card { background: var(--surface-solid); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,.08); color: var(--text-main); }
+    h1 { margin: 0 0 .5rem; color: var(--text-main); }
     .muted { color: var(--muted); margin: 0; }
     .stats { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
     .stat { display: grid; gap: .25rem; text-align: center; }
@@ -40,7 +38,6 @@ import { UsersApi } from '../users-api';
 export class DashboardPage implements OnInit {
   protected readonly auth = inject(AuthApi);
   private readonly users = inject(UsersApi);
-
   protected readonly total = signal(0);
   protected readonly agents = signal(0);
   protected readonly suspended = signal(0);

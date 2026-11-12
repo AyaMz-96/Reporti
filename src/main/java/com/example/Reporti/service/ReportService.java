@@ -58,11 +58,14 @@ public class ReportService {
         report.setCategoryId(request.categoryId());
         report.setSectorId(request.sectorId());
         report.setCitizenId(citizenId);
+        // Entity defaults to NORMAL; only override when the client sent a value
+        if (request.priority() != null) {
+            report.setPriority(request.priority());
+        }
         Report saved = reportRepository.save(report);
         return ReportResponse.from(saved, List.of());
     }
 
-    /** Legacy admin-style assignment: admin picks any agent from the available list. */
     @Transactional
     public ReportResponse assignReport(Long reportId, String agentId) {
         Report report = findReport(reportId);
@@ -78,7 +81,6 @@ public class ReportService {
         return ReportResponse.from(reportRepository.save(report), mediaRepository.findByReportId(reportId));
     }
 
-    /** Reports a given agent can take up right now: RECEIVED, unassigned, matching their profile. */
     @Transactional(readOnly = true)
     public List<ReportResponse> listClaimableForAgent(List<Integer> categoryIds, Integer sectorId) {
         if ((categoryIds == null || categoryIds.isEmpty()) && sectorId == null) {
@@ -93,7 +95,6 @@ public class ReportService {
             .toList();
     }
 
-    /** Reports already assigned to this specific agent. */
     @Transactional(readOnly = true)
     public List<ReportResponse> listActiveForAgent(String agentId) {
         return reportRepository.findByArchivedFalseOrderByCreatedAtDesc().stream()
@@ -102,7 +103,6 @@ public class ReportService {
             .toList();
     }
 
-    /** Claim a report for the calling agent, with full fit revalidation on the server. */
     @Transactional
     public ReportResponse claimReport(Long reportId, String agentId, List<Integer> categoryIds, Integer sectorId) {
         Report report = findReport(reportId);

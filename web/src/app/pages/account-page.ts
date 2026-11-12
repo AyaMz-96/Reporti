@@ -1,13 +1,12 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { AuthApi, errorMessage, supabase } from '../auth/auth-api';
 import { ReportApi } from '../report-api';
 import { Category, Sector } from '../models';
 
 @Component({
   selector: 'app-account-page',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule],
   template: `
     <main class="wrap">
       @if (auth.user(); as user) {
@@ -98,7 +97,6 @@ import { Category, Sector } from '../models';
     .logout { background: #1c1c1a; }
     .err { color: var(--accent-red); margin: 0; }
     .ok { color: #22c55e; margin: 0; }
-
     :host-context(.dark-theme) button { color: #1a1a1a; }
     :host-context(.dark-theme) .logout { background: #50524c; color: #F7F4E8; }
   `],
