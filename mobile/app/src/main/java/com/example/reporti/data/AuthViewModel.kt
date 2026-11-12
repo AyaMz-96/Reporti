@@ -25,8 +25,11 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         private set
 
     init {
+        // Restore AuthTokenHolder from the persisted session so ApiClient can send Bearer headers
+        AuthTokenHolder.accessToken = repo.accessToken
         viewModelScope.launch {
             val user = repo.restore()
+            AuthTokenHolder.accessToken = repo.accessToken
             state = state.copy(user = user, ready = true)
         }
     }
@@ -46,6 +49,14 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
     fun forgotPassword(email: String) = run {
         repo.forgotPassword(email)
         state = state.copy(message = "If an account exists for this email, a reset link has been sent.")
+    }
+
+    fun updatePreferences(categoryIds: List<Long>, sectorId: Long?) = run {
+        val updated = repo.updateMetadata(mapOf(
+            "categoryIds" to categoryIds,
+            "sectorId" to sectorId,
+        ))
+        state = state.copy(user = updated, message = "Preferences saved.")
     }
 
     fun logout() {

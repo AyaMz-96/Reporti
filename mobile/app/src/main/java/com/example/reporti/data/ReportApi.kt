@@ -15,13 +15,7 @@ import retrofit2.http.Part
 import retrofit2.http.Path
 import java.util.concurrent.TimeUnit
 
-/**
- * Mirrors the Spring controllers in com.example.Reporti.controller exactly.
- * The citizen is identified by the X-Citizen-Id header (added in ApiClient), not by a userId query parameter.
- */
 interface ReportApi {
-
-    // ----- Reference data -----
 
     @GET("categories")
     suspend fun getCategories(): List<Category>
@@ -29,15 +23,12 @@ interface ReportApi {
     @GET("sectors")
     suspend fun getSectors(): List<Sector>
 
-    // ----- Reports -----
-
     @GET("reports")
     suspend fun getReports(): List<ReportResponse>
 
     @POST("reports")
     suspend fun createReport(@Body request: CreateReportRequest): ReportResponse
 
-    // Every part is named "files", matching @RequestParam("files") on the backend
     @Multipart
     @POST("reports/{id}/media")
     suspend fun uploadMedia(
@@ -45,12 +36,9 @@ interface ReportApi {
         @Part files: List<MultipartBody.Part>,
     ): List<String>
 
-    // ----- Notifications (plain list, no paging) -----
-
     @GET("notifications")
     suspend fun notifications(): List<NotificationDto>
 
-    // The backend answers 204 No Content, so these return Response<> to avoid parsing an empty body
     @PATCH("notifications/{id}/read")
     suspend fun markRead(@Path("id") id: Long): Response<ResponseBody>
 
@@ -58,27 +46,41 @@ interface ReportApi {
     suspend fun markAllRead(): Response<ResponseBody>
 }
 
+interface AgentApi {
+    @GET("agents/me/available")
+    suspend fun getMyAvailable(): List<ReportResponse>
+
+    @GET("agents/me/active")
+    suspend fun getMyActive(): List<ReportResponse>
+
+    @POST("agents/me/claim/{reportId}")
+    suspend fun claimReport(@Path("reportId") reportId: Long): ReportResponse
+}
+
 object ApiClient {
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
-        // The backend uploads to Supabase before answering, so big files need more than the 10 s default
         .readTimeout(60, TimeUnit.SECONDS)
         .writeTimeout(60, TimeUnit.SECONDS)
-        // TEMPORARY: the backend identifies the citizen from this header until real authentication exists
         .addInterceptor { chain ->
-            chain.proceed(
-                chain.request().newBuilder()
-                    .header("X-Citizen-Id", Config.CITIZEN_ID.toString())
-                    .build()
-            )
+            val builder = chain.request().newBuilder()
+                // Legacy temporary header (used by reports + notifications endpoints)
+                .header("X-Citizen-Id", Config.CITIZEN_ID.toString())
+            // Attach the current Supabase token so /agents/me/* endpoints recognise the caller
+            AuthTokenHolder.accessToken?.let { token ->
+                builder.header("Authorization", "Bearer $token")
+            }
+            chain.proceed(builder.build())
         }
         .build()
 
-    val api: ReportApi = Retrofit.Builder()
+    private val retrofit: Retrofit = Retrofit.Builder()
         .baseUrl(Config.API_BASE_URL)
         .client(client)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
-        .create(ReportApi::class.java)
+
+    val api: ReportApi = retrofit.create(ReportApi::class.java)
+    val agentApi: AgentApi = retrofit.create(AgentApi::class.java)
 }
