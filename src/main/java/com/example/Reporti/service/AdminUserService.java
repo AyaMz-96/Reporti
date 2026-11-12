@@ -12,16 +12,18 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class AdminUserService {
 
     public record Caller(String id, String role) {}
 
-        private static final Set<String> ROLES = Set.of("citizen", "agent", "sector_manager", "admin");
+    private static final Set<String> ROLES = Set.of("citizen", "agent", "sector_manager", "admin");
 
     private final String baseUrl;
     private final String serviceKey;
@@ -35,7 +37,6 @@ public class AdminUserService {
         this.serviceKey = serviceKey;
     }
 
-    /** Checks the caller's token with Supabase and requires the admin role. */
     public Caller requireAdmin(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing token");
@@ -60,6 +61,26 @@ public class AdminUserService {
 
     public String list() {
         return send("GET", "/auth/v1/admin/users?per_page=200", null, adminBearer());
+    }
+
+    public List<Map<String, Object>> getAvailableAgents() {
+        String json = list();
+        try {
+            Map<String, Object> response = mapper.readValue(json, Map.class);
+            List<Map<String, Object>> users = (List<Map<String, Object>>) response.get("users");
+            if (users == null) return List.of();
+            
+            return users.stream()
+                .filter(u -> {
+                    Map<String, Object> appMeta = (Map<String, Object>) u.get("app_metadata");
+                    Map<String, Object> userMeta = (Map<String, Object>) u.get("user_metadata");
+                    return appMeta != null && "agent".equals(appMeta.get("role")) &&
+                           userMeta != null && Boolean.TRUE.equals(userMeta.get("is_available"));
+                })
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to parse agents");
+        }
     }
 
     public String create(String email, String password, String fullName, String phone, String role) {
@@ -93,10 +114,7 @@ public class AdminUserService {
         send("DELETE", "/auth/v1/admin/users/" + checkId(id), null, adminBearer());
     }
 
-    // ---------- helpers ----------
-
     private String adminBearer() {
-        // New sb_secret_ keys are not JWTs: they go only in the apikey header
         return serviceKey.startsWith("sb_secret_") ? null : "Bearer " + serviceKey;
     }
 

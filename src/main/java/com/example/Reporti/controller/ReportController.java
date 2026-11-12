@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,13 +24,15 @@ import java.util.List;
 @RequestMapping("/api/reports")
 public class ReportController {
 
-    private static final String CITIZEN_HEADER = "X-Citizen-Id"; // TEMPORARY until real authentication exists
+    private static final String CITIZEN_HEADER = "X-Citizen-Id";
 
     private final ReportService reportService;
 
     public ReportController(ReportService reportService) {
         this.reportService = reportService;
     }
+
+    public record AssignReportRequest(String agentId) {}
 
     @PostMapping
     public ResponseEntity<ReportResponse> create(@Valid @RequestBody CreateReportRequest request,
@@ -43,13 +46,19 @@ public class ReportController {
                                     @RequestParam("files") List<MultipartFile> files) {
         return reportService.addMedia(id, citizenId, files);
     }
-        @GetMapping
+
+    @PatchMapping("/{id}/assign")
+    public ReportResponse assign(@PathVariable Long id, @RequestBody AssignReportRequest request) {
+        return reportService.assignReport(id, request.agentId());
+    }
+
+    @GetMapping
     public List<ReportResponse> list() {
         return reportService.list();
     }
 
     @GetMapping("/{id}")
     public ReportResponse get(@PathVariable Long id) {
-        return reportService.get(id);                                                               
+        return reportService.get(id);
     }
 }

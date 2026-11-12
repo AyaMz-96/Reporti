@@ -5,6 +5,7 @@ import com.example.Reporti.dto.ReportResponse;
 import com.example.Reporti.model.Media;
 import com.example.Reporti.model.MediaKind;
 import com.example.Reporti.model.Report;
+import com.example.Reporti.model.ReportStatus;
 import com.example.Reporti.repository.CategoryRepository;
 import com.example.Reporti.repository.MediaRepository;
 import com.example.Reporti.repository.ReportRepository;
@@ -62,7 +63,17 @@ public class ReportService {
         Report saved = reportRepository.save(report);
         return ReportResponse.from(saved, List.of());
     }
-        @Transactional(readOnly = true)
+
+    @Transactional
+    public ReportResponse assignReport(Long reportId, String agentId) {
+        Report report = findReport(reportId);
+        report.setAgentId(agentId);
+        report.setStatus(ReportStatus.IN_PROGRESS);
+        Report saved = reportRepository.save(report);
+        return ReportResponse.from(saved, mediaRepository.findByReportId(reportId));
+    }
+
+    @Transactional(readOnly = true)
     public List<ReportResponse> list() {
         return reportRepository.findByArchivedFalseOrderByCreatedAtDesc().stream()
                 .map(report -> ReportResponse.from(report, mediaRepository.findByReportId(report.getId())))
@@ -74,7 +85,6 @@ public class ReportService {
         return ReportResponse.from(report, mediaRepository.findByReportId(reportId));
     }
 
-    /** Not transactional on purpose: the slow network uploads shouldn't hold a DB transaction open. */
     public List<String> addMedia(Long reportId, Long citizenId, List<MultipartFile> files) {
         Report report = findReport(reportId);
         if (!report.getCitizenId().equals(citizenId)) {

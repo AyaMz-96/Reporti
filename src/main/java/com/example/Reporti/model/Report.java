@@ -29,7 +29,6 @@ public class Report {
     @Column(nullable = false)
     private String description;
 
-    // The DB uses native Postgres enum types, hence NAMED_ENUM
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(nullable = false)
@@ -62,6 +61,9 @@ public class Report {
 
     @Column(name = "citizen_id", nullable = false)
     private Long citizenId;
+
+    @Column(name = "agent_id")
+    private String agentId;
 
     @PrePersist
     void onCreate() {
@@ -98,4 +100,6 @@ public class Report {
     public void setSectorId(Long sectorId) { this.sectorId = sectorId; }
     public Long getCitizenId() { return citizenId; }
     public void setCitizenId(Long citizenId) { this.citizenId = citizenId; }
+    public String getAgentId() { return agentId; }
+    public void setAgentId(String agentId) { this.agentId = agentId; }
 }
