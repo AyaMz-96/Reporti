@@ -27,6 +27,7 @@
   margin: 0;
   font-family: Georgia, serif;
   font-size: clamp(2.4rem, 6vw, 4rem);
+  color: var(--text-main);
 }
 
 .heading > p:last-child {
@@ -116,6 +117,7 @@
   border-radius: 20px;
   padding: 1.25rem;
   background: var(--surface-solid);
+  color: var(--text-main);
   box-shadow: 0 24px 70px rgba(40, 35, 27, 0.24);
 }
 
@@ -138,6 +140,7 @@
   margin: 0.25rem 0 0;
   font-family: Georgia, serif;
   font-size: 1.6rem;
+  color: var(--text-main);
 }
 
 .close-button {
@@ -158,6 +161,7 @@
   margin-top: 0.75rem;
   font-size: 0.82rem;
   font-weight: 800;
+  color: var(--text-main);
 }
 
 .filter-window select {
@@ -216,6 +220,7 @@ li {
   border-radius: 16px;
   padding: 1rem 1.25rem;
   background: var(--surface);
+  color: var(--text-main);
   box-shadow: 0 8px 24px rgba(58, 48, 26, 0.05);
 }
 
@@ -226,6 +231,7 @@ li {
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--text-main);
 }
 
 .meta {
@@ -267,9 +273,6 @@ li {
   border: 1px solid var(--border);
   border-radius: 20px;
   background: var(--surface);
-}
-
-.empty {
   color: var(--muted);
 }
 
@@ -318,45 +321,37 @@ li {
 .error {
   padding: 1rem;
   border-radius: 10px;
-  background: #fdecea;
-  color: #b3261e;
+  background: rgba(214, 48, 49, 0.12);
+  color: var(--accent-red);
 }
 
 @media (max-width: 780px) {
   .reports {
     padding: 0 1rem;
   }
-
   .reports-header {
     grid-template-columns: 1fr;
     align-items: start;
   }
-
   .toolbar {
     width: 100%;
   }
-
   .search-box {
     width: auto;
     flex: 1;
   }
-
   li {
     grid-template-columns: 1fr;
   }
-
   .meta {
     justify-content: flex-start;
   }
-
   .pagination {
     grid-template-columns: 44px 1fr 44px;
   }
-
   .page-button {
     width: 44px;
   }
-
   .page-button span {
     display: none;
   }
