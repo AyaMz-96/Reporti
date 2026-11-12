@@ -14,10 +14,13 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.reporti.data.AuthViewModel
+import com.example.reporti.data.Category
+import com.example.reporti.data.ReportRepository
+import com.example.reporti.data.Sector
+import kotlinx.coroutines.launch
 
 private enum class AuthScreen { LOGIN, REGISTER, FORGOT }
 
-/** Affiche la connexion tant que l'utilisateur n'est pas connecte, puis ton contenu. */
 @Composable
 fun AuthGate(vm: AuthViewModel = viewModel(), content: @Composable () -> Unit) {
     val state = vm.state
@@ -141,16 +144,171 @@ private fun ForgotPasswordScreen(vm: AuthViewModel, onBack: () -> Unit) {
     }
 }
 
-/** Le "dashboard" : profil + deconnexion. A brancher sur ton onglet profil. */
+/** Agent/sector-manager-only screen section that lets the user pick their own
+ *  assignment categories and sector, which drives the "Available for you" list. */
 @Composable
 fun AccountScreen(vm: AuthViewModel = viewModel()) {
     val user = vm.state.user ?: return
-    Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
+    val isAgent = user.role == "agent" || user.role == "sector_manager"
+
+    val scope = rememberCoroutineScope()
+    var categories by remember { mutableStateOf<List<Category>>(emptyList()) }
+    var sectors by remember { mutableStateOf<List<Sector>>(emptyList()) }
+    var selectedCategoryIds by remember { mutableStateOf(user.categoryIds) }
+    var selectedSectorId by remember { mutableStateOf(user.sectorId) }
+    var savingPrefs by remember { mutableStateOf(false) }
+    var localError by remember { mutableStateOf<String?>(null) }
+    var loadingOptions by remember { mutableStateOf(isAgent) }
+
+    // Refresh local selection when the user is refreshed by the ViewModel (after save)
+    LaunchedEffect(user.id, user.categoryIds, user.sectorId) {
+        selectedCategoryIds = user.categoryIds
+        selectedSectorId = user.sectorId
+    }
+
+    LaunchedEffect(isAgent) {
+        if (!isAgent) return@LaunchedEffect
+        try {
+            categories = ReportRepository.getCategories()
+            sectors = ReportRepository.getSectors()
+        } catch (e: Exception) {
+            localError = "Could not load categories and sectors."
+        } finally {
+            loadingOptions = false
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .imePadding()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
         Text("Hello, ${user.fullName}", style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(16.dp))
+        Text("Role: ${user.role}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text("Email: ${user.email}")
         Text("Phone: ${user.phone ?: "—"}")
-        Spacer(Modifier.height(24.dp))
-        Button(onClick = { vm.logout() }, modifier = Modifier.fillMaxWidth()) { Text("Log out") }
+
+        if (isAgent) {
+            HorizontalDivider()
+            Text("Assignment preferences", style = MaterialTheme.typography.titleLarge)
+            Text(
+                "Choose the categories and sector you handle. You'll only be shown reports that match.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            if (loadingOptions) {
+                Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                Text("Categories", style = MaterialTheme.typography.titleSmall)
+                FlowRowCategories(
+                    categories = categories,
+                    selectedIds = selectedCategoryIds,
+                    onToggle = { id ->
+                        selectedCategoryIds = if (id in selectedCategoryIds)
+                            selectedCategoryIds - id
+                        else selectedCategoryIds + id
+                    },
+                )
+
+                Spacer(Modifier.height(8.dp))
+                Text("Sector", style = MaterialTheme.typography.titleSmall)
+                FlowRowSectors(
+                    sectors = sectors,
+                    selectedId = selectedSectorId,
+                    onSelect = { id -> selectedSectorId = id },
+                )
+
+                localError?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+                vm.state.error?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+                vm.state.message?.let {
+                    Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                }
+
+                Button(
+                    onClick = {
+                        savingPrefs = true
+                        localError = null
+                        scope.launch {
+                            try {
+                                vm.updatePreferences(selectedCategoryIds, selectedSectorId)
+                            } finally {
+                                savingPrefs = false
+                            }
+                        }
+                    },
+                    enabled = !savingPrefs && !vm.state.loading,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(if (savingPrefs) "Saving…" else "Save preferences")
+                }
+            }
+        }
+
+        HorizontalDivider()
+        OutlinedButton(
+            onClick = { vm.logout() },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Log out") }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FlowRowCategories(
+    categories: List<Category>,
+    selectedIds: List<Long>,
+    onToggle: (Long) -> Unit,
+) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        categories.forEach { c ->
+            FilterChip(
+                selected = c.id in selectedIds,
+                onClick = { onToggle(c.id) },
+                label = { Text(c.name) },
+            )
+        }
+        if (categories.isEmpty()) {
+            Text("No categories exist yet — ask an admin to create some.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FlowRowSectors(
+    sectors: List<Sector>,
+    selectedId: Long?,
+    onSelect: (Long?) -> Unit,
+) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        FilterChip(
+            selected = selectedId == null,
+            onClick = { onSelect(null) },
+            label = { Text("Any") },
+        )
+        sectors.forEach { s ->
+            FilterChip(
+                selected = selectedId == s.id,
+                onClick = { onSelect(s.id) },
+                label = { Text(s.name + (s.zone?.let { " ($it)" } ?: "")) },
+            )
+        }
+        if (sectors.isEmpty()) {
+            Text("No sectors configured.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
