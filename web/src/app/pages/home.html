@@ -1,0 +1,100 @@
+<section class="hero-section">
+  <div class="hero-content">
+    <p class="eyebrow">Community reporting</p>
+    <h1>See a problem?<br /><span>Report<span class="red-dot">i</span>!</span></h1>
+    <p class="description">
+      Report urban issues, share their locations, and help connect your community with the people
+      responsible for making things better.
+    </p>
+    <a class="submit-report-btn" routerLink="/report">Submit a report <span aria-hidden="true">›</span></a>
+  </div>
+
+  <div class="hero-image-container" aria-label="Community reporting illustration">
+    <div class="map-card">
+      <span class="pin pin-one"></span>
+      <span class="pin pin-two"></span>
+      <span class="pin pin-three"></span>
+      <div class="phone">
+        <div class="phone-screen">
+          <span class="phone-mark">R</span>
+          <span class="phone-line"></span>
+          <span class="phone-line short"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="reports-section" aria-labelledby="latest-reports-heading">
+  <div class="reports-heading">
+    <div>
+      <p class="eyebrow">Community activity</p>
+      <h2 id="latest-reports-heading">Latest reports</h2>
+    </div>
+
+    <div class="carousel-actions">
+      <button
+        type="button"
+        aria-label="Previous reports"
+        [disabled]="loading() || reports().length === 0"
+        (click)="scroll(-1)"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m15 18-6-6 6-6"></path>
+        </svg>
+      </button>
+      <button
+        type="button"
+        aria-label="Next reports"
+        [disabled]="loading() || reports().length === 0"
+        (click)="scroll(1)"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m9 18 6-6-6-6"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="reports-loading" role="status">
+      <app-loading-spinner label="Loading reports" />
+    </div>
+  } @else if (errorMessage()) {
+    <p class="reports-message error" role="alert">{{ errorMessage() }}</p>
+  } @else if (reports().length === 0) {
+    <p class="reports-message">No reports have been submitted yet.</p>
+  } @else {
+    <div class="reports-carousel" #reportCarousel>
+      @for (report of reports(); track report.id) {
+        <article class="report-card">
+          <div class="report-media">
+            @if (report.mediaUrls.length > 0) {
+              <img [src]="report.mediaUrls[0]" alt="" />
+            } @else {
+              <div class="media-placeholder" aria-hidden="true">
+                <span class="placeholder-mark">R</span>
+              </div>
+            }
+
+            <span class="priority" [class.urgent]="report.priority === 'URGENT'">
+              {{ report.priority }}
+            </span>
+          </div>
+
+          <div class="report-card-body">
+            <div class="report-meta">
+              <span>{{ categoryName(report.categoryId) }}</span>
+              <time [dateTime]="report.createdAt">{{ report.createdAt | date: 'mediumDate' }}</time>
+            </div>
+            <h3>{{ report.title }}</h3>
+            <p>{{ report.description }}</p>
+            <span class="status" [attr.data-status]="report.status">
+              {{ statusLabel(report.status) }}
+            </span>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

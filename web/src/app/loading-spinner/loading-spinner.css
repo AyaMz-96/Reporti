@@ -1,0 +1,32 @@
+:host {
+  display: inline-grid;
+  place-items: center;
+}
+
+.spinner {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+}
+
+.spinner-ring {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(214, 48, 49, 0.18);
+  border-top-color: var(--accent-red, #d63031);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner-ring {
+    animation-duration: 1.5s;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
